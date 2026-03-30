@@ -23,6 +23,7 @@ module execute
 	input     	alu,
 	input     	branch,
 	input     	arithsubtype,
+	input		is_m_ext,
 	input     	mem_to_reg,
 	input     	stall_read,
 
@@ -97,6 +98,20 @@ assign ex_result_subu = {1'b0,alu_operand1} - {1'b0,alu_operand2};
 
 assign write_address = alu_operand1 + execute_imm;
 assign branch_stall  = wb_branch_nxt_i || wb_branch_i;
+
+
+/////////////////////////////////////////////////////////////RV32M 64////////////////////////////////////////////////////////
+
+// --- RV32M 64-bit Multipliers ---
+// Explicitly extend operands to 64 bits to prevent Verilog sign-extension bugs
+wire signed [63:0] alu1_signed   = {{32{alu_operand1[31]}}, alu_operand1};
+wire signed [63:0] alu2_signed   = {{32{alu_operand2[31]}}, alu_operand2};
+wire signed [63:0] alu1_unsigned = {32'd0, alu_operand1};
+wire signed [63:0] alu2_unsigned = {32'd0, alu_operand2};
+
+wire [63:0] mul_ss = alu1_signed * alu2_signed;
+wire [63:0] mul_su = alu1_signed * alu2_unsigned;
+wire [63:0] mul_uu = alu1_unsigned * alu2_unsigned;
 
 ////////////////////////////////////////////////////////////// Next PC logic////////////////////////////////////////////////////////////
 
@@ -197,25 +212,49 @@ always @(*) begin
     	lui:   	ex_result = execute_imm;
 
     	alu: begin
-        	case (alu_op)
-            	ADD : ex_result =
-                  	arithsubtype
-                  	? alu_operand1 - alu_operand2
-                  	: alu_operand1 + alu_operand2;
-            	SLL : ex_result = alu_operand1 << alu_operand2[4:0];// TODO-EX-4: Perform logical left shift
-            	SLT : ex_result = ex_result_subs[32];
-            	
-            	//to be checked
-            	SLTU: ex_result = ex_result_subu[32];// TODO-EX-4: Perform unsigned comparison
-            	XOR : ex_result = (alu_operand1 ^ alu_operand2);// TODO-EX-4: Perform bitwise XOR
-            	SR  : ex_result =
-                  	arithsubtype
-                  	? $signed(alu_operand1) >>> alu_operand2[4:0]
-                  	: alu_operand1 >> alu_operand2[4:0];
-            	OR  : ex_result = (alu_operand1 | alu_operand2);// TODO-EX-4: Perform bitwise OR
-            	AND : ex_result = (alu_operand1 & alu_operand2);// TODO-EX-4: Perform bitwise AND
-            	default: ex_result = 'hx;
-        	endcase
+			if (is_m_ext) begin
+                case (alu_op)
+                    MUL:    ex_result = mul_ss[31:0];
+                    MULH:   ex_result = mul_ss[63:32];
+                    MULHSU: ex_result = mul_su[63:32];
+                    MULHU:  ex_result = mul_uu[63:32];
+                    
+                    // RISC-V Spec dictates specific behavior for divide by zero and overflow
+                    DIV:    ex_result = (alu_operand2 == 0) ? 32'hFFFF_FFFF : 
+                                        ((alu_operand1 == 32'h8000_0000 && alu_operand2 == 32'hFFFF_FFFF) ? 32'h8000_0000 : 
+                                        $signed(alu_operand1) / $signed(alu_operand2));
+                    
+                    DIVU:   ex_result = (alu_operand2 == 0) ? 32'hFFFF_FFFF : 
+                                        alu_operand1 / alu_operand2;
+                    
+                    REM:    ex_result = (alu_operand2 == 0) ? alu_operand1 : 
+                                        ((alu_operand1 == 32'h8000_0000 && alu_operand2 == 32'hFFFF_FFFF) ? 32'h0000_0000 : 
+                                        $signed(alu_operand1) % $signed(alu_operand2));
+                    
+                    REMU:   ex_result = (alu_operand2 == 0) ? alu_operand1 : 
+                                        alu_operand1 % alu_operand2;
+                    default: ex_result = 32'hx;
+                endcase
+            end else begin
+				case (alu_op)
+					ADD : ex_result =
+						arithsubtype
+						? alu_operand1 - alu_operand2
+						: alu_operand1 + alu_operand2;
+					SLL : ex_result = alu_operand1 << alu_operand2[4:0];// TODO-EX-4: Perform logical left shift
+					SLT : ex_result = ex_result_subs[32];
+					
+					//to be checked
+					SLTU: ex_result = ex_result_subu[32];// TODO-EX-4: Perform unsigned comparison
+					XOR : ex_result = (alu_operand1 ^ alu_operand2);// TODO-EX-4: Perform bitwise XOR
+					SR  : ex_result =
+						arithsubtype
+						? $signed(alu_operand1) >>> alu_operand2[4:0]
+						: alu_operand1 >> alu_operand2[4:0];
+					OR  : ex_result = (alu_operand1 | alu_operand2);// TODO-EX-4: Perform bitwise OR
+					AND : ex_result = (alu_operand1 & alu_operand2);// TODO-EX-4: Perform bitwise AND
+					default: ex_result = 'hx;
+				endcase
     	end
 
     	default: ex_result = 'hx;

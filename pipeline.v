@@ -54,6 +54,7 @@
 	wire       	[ 4: 0] dest_reg_sel;
 	wire       	[ 2: 0] alu_operation;
 	wire               	arithsubtype;
+    wire                is_m_ext;
 	wire               	mem_write;
 	wire               	mem_to_reg;
 	wire               	illegal_inst;
@@ -159,6 +160,7 @@ IF_ID IF_ID_stage (
 	.mem_write_w    	(mem_write),
 	.mem_to_reg_w   	(mem_to_reg),
 	.arithsubtype_w 	(arithsubtype),
+    .m_ext_w            (is_m_ext),
 	.pc_w           	(pc),
 	.src1_select_w  	(src1_select),
 	.src2_select_w  	(src2_select),
@@ -264,6 +266,7 @@ IF_ID IF_ID_stage (
         .alu              (alu),
         .branch           (branch),
         .arithsubtype     (arithsubtype),
+        .is_m_ext         (is_m_ext),
         .mem_to_reg       (mem_to_reg),
         .stall_read       (stall_read),
         .dest_reg_sel     (dest_reg_sel),
