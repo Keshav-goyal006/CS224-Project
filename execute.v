@@ -255,7 +255,8 @@ always @(*) begin
 					AND : ex_result = (alu_operand1 & alu_operand2);// TODO-EX-4: Perform bitwise AND
 					default: ex_result = 'hx;
 				endcase
-    	end
+    		end
+		end
 
     	default: ex_result = 'hx;
 	endcase

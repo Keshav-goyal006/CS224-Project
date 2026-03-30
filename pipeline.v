@@ -2,6 +2,7 @@
 `include "IF_ID.v"
 `include "execute.v"
 `include "wb.v"
+`include "mac_accelerator.v"
 
  module pipe
 #(
@@ -237,7 +238,6 @@ IF_ID IF_ID_stage (
             stall_read <= stall;
     end
 
-
 // instantiating execute module -----------------------------------
     execute execute (
         // -----------------
@@ -337,6 +337,24 @@ always @(posedge clk or negedge reset) begin
                      	? fetch_pc + 4
                      	: next_pc;
 end
+
+
+// Instantiate the MAC
+wire [31:0] mac_read_data;
+wire is_mac_addr = (dmem_write_address[31:12] == 20'h00002); // Checks if address starts with 0x2000...
+
+mac_accelerator my_mac (
+    .clk(clk),
+    .reset(reset),
+    .we(dmem_write_ready && is_mac_addr),
+    .wdata(dmem_write_data),
+    .addr_offset(dmem_write_address[3:2]), // Use word-aligned offset
+    .rdata(mac_read_data)
+);
+
+// Multiplex the read data back to the CPU
+// If reading from MAC address, return MAC data; otherwise return DMEM data.
+wire [31:0] final_read_data = is_mac_addr ? mac_read_data : dmem_read_data_temp;
 
 
 // instantiating Writeback module ----------------------------------
