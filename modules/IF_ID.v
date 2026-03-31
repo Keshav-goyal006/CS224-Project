@@ -38,7 +38,7 @@ module IF_ID
     output        mem_write_w,
     output        mem_to_reg_w,
     output        arithsubtype_w,
-    output        m_ext_w;
+    output        m_ext_w,
     output [31:0] pc_w,
     output [4:0]  src1_select_w,
     output [4:0]  src2_select_w,

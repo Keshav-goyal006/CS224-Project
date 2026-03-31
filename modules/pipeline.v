@@ -28,7 +28,9 @@
     output                dmem_write_ready,
     output       [31: 0]  dmem_write_address,
     output       [31: 0]  dmem_write_data,
-    output       [ 3: 0]  dmem_write_byte
+    output       [ 3: 0]  dmem_write_byte,
+
+    output       [15:0]   led_out
 );
     
 	//Declaring Wires and Registers
@@ -339,22 +341,36 @@ always @(posedge clk or negedge reset) begin
 end
 
 
-// Instantiate the MAC
-wire [31:0] mac_read_data;
-wire is_mac_addr = (dmem_write_address[31:12] == 20'h00002); // Checks if address starts with 0x2000...
+wire [31:0] coproc_read_data;
+wire is_coproc_waddr = (dmem_write_address[31:12] == 20'h00002);
+wire is_coproc_raddr = (dmem_read_address[31:12]  == 20'h00002);
 
-mac_accelerator my_mac (
+conv_accelerator my_conv (
     .clk(clk),
     .reset(reset),
-    .we(dmem_write_ready && is_mac_addr),
+    .we(dmem_write_ready && is_coproc_waddr),
+    .waddr(dmem_write_address),
     .wdata(dmem_write_data),
-    .addr_offset(dmem_write_address[3:2]), // Use word-aligned offset
-    .rdata(mac_read_data)
+    .raddr(dmem_read_address),
+    .rdata(coproc_read_data)
 );
 
 // Multiplex the read data back to the CPU
-// If reading from MAC address, return MAC data; otherwise return DMEM data.
-wire [31:0] final_read_data = is_mac_addr ? mac_read_data : dmem_read_data_temp;
+wire [31:0] final_read_data = is_coproc_raddr ? coproc_read_data : dmem_read_data_temp;
+
+
+// -------------------------------------------------------------------------
+// LED Memory Mapped Register (Mapped to 0x3000)
+// -------------------------------------------------------------------------
+reg [15:0] led_reg;
+always @(posedge clk or negedge reset) begin
+    if (!reset) begin
+        led_reg <= 16'b0;
+    end else if (dmem_write_ready && dmem_write_address == 32'h00003000) begin
+        led_reg <= dmem_write_data[15:0];
+    end
+end
+assign led_out = led_reg;
 
 
 // instantiating Writeback module ----------------------------------
@@ -371,7 +387,7 @@ wb wb_stage (
     .alu_operation_i     (alu_operation),
     .wb_alu_operation_i  (wb_alu_operation),
     .wb_read_address_i   (wb_read_address),
-    .dmem_read_data_i    (dmem_read_data),
+    .dmem_read_data_i    (final_read_data),
     .dmem_write_valid_i  (dmem_write_valid),
     
     // -----------------
@@ -419,5 +435,23 @@ wb wb_stage (
 );
 
 assign pc_out = fetch_pc;
+
+// -------------------------------------------------------------------------
+// Simulation File Output (Traps writes to 0x4000)
+// -------------------------------------------------------------------------
+integer file_out;
+
+// Create the file when simulation starts
+initial begin
+    file_out = $fopen("output_pixels.txt", "w");
+end
+
+// Listen for the CPU writing to our magic address
+always @(posedge clk) begin
+    if (dmem_write_ready && dmem_write_address == 32'h00004000) begin
+        // Write the pixel value to the text file
+        $fdisplay(file_out, "%d", $signed(dmem_write_data));
+    end
+end
 
 endmodule

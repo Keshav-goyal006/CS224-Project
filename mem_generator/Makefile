@@ -13,13 +13,15 @@ CFLAGS  = -march=rv32im -mabi=ilp32
 
 
 #////Source for c code file ///////////////////////////
-SRC_ADDITION     = code_mac.c
-SRC_SORT     = code_sort.c
-SRC_NEGATIVE = code_negative.c
+SRC_ADDITION     = code_addition.c
+SRC_SORT         = code_sort.c
+SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
+SRC_VISION       = code_vision.c      # <--- NEW: Added vision source
+
 TARGET           = code.elf
-.PHONY: all clean
+.PHONY: all clean vision              # <--- NEW: Added vision to phony
 
 #/// generating .text file of code cross-compiled from highlevel-c code to risc-v code
 # ////////////// Copying and converting the text file into binary files
@@ -55,6 +57,14 @@ fibonacci: $(SRC_FIBONACCI)
 
 xor: $(SRC_XOR)
 	$(CC) -c  $(SRC_XOR) -o $(TARGET) $(CFLAGS)
+	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
+	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
+	cd imem_dmem && python bin2hex.py
+
+# <--- NEW: Vision Compilation Target --->
+vision: $(SRC_VISION)
+	$(CC) -c  $(SRC_VISION) -o $(TARGET) $(CFLAGS)
 	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
 	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
