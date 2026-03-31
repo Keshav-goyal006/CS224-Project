@@ -38,6 +38,7 @@ module IF_ID
     output        mem_write_w,
     output        mem_to_reg_w,
     output        arithsubtype_w,
+    output        m_ext_w;
     output [31:0] pc_w,
     output [4:0]  src1_select_w,
     output [4:0]  src2_select_w,
@@ -188,6 +189,7 @@ id_ex_reg u_id_ex (
     	!(instruction_i[`OPCODE] == ARITHI &&
       	instruction_i[`FUNC3] == ADD)
 	),
+    .m_ext_i        ((instruction_i[`OPCODE] == ARITHR) && instruction_i[25]),
 	.pc_i       	(inst_fetch_pc),
 	.src1_sel_i 	(instruction_i[`RS1]),
 	.src2_sel_i 	(instruction_i[`RS2]),
@@ -206,6 +208,7 @@ id_ex_reg u_id_ex (
 	.mem_write_o     	(mem_write_w),
 	.mem_to_reg_o    	(mem_to_reg_w),
 	.arithsubtype_o  	(arithsubtype_w),
+    .m_ext_o            (m_ext_w),
 	.pc_o            	(pc_w),
 	.src1_sel_o      	(src1_select_w),
 	.src2_sel_o      	(src2_select_w),
@@ -234,6 +237,7 @@ module id_ex_reg (
     input         mem_write_i,
     input         mem_to_reg_i,
     input         arithsubtype_i,
+    input         m_ext_i,
     input  [31:0] pc_i,
     input  [4:0]  src1_sel_i,
     input  [4:0]  src2_sel_i,
@@ -252,6 +256,7 @@ module id_ex_reg (
     output reg        mem_write_o,
     output reg        mem_to_reg_o,
     output reg        arithsubtype_o,
+    output reg        m_ext_o,
     output reg [31:0] pc_o,
     output reg [4:0]  src1_sel_o,
     output reg [4:0]  src2_sel_o,
@@ -272,6 +277,7 @@ always @(posedge clk or negedge reset_n) begin
         mem_write_o         <= 1'b0;
         mem_to_reg_o        <= 1'b0;
         arithsubtype_o      <= 1'b0;
+        m_ext_o             <= 1'b0;
         pc_o                <= 32'h0;
         src1_sel_o          <= 5'h0;
         src2_sel_o          <= 5'h0;// TODO: Clear the signal on reset;
@@ -290,6 +296,7 @@ always @(posedge clk or negedge reset_n) begin
         mem_write_o         <= mem_write_i;// TODO: Store the corresponding signal in a flip flop;
         mem_to_reg_o        <= mem_to_reg_i;
         arithsubtype_o      <= arithsubtype_i;
+        m_ext_o             <= m_ext_i;
         pc_o                <= pc_i;
         src1_sel_o          <= src1_sel_i;
         src2_sel_o          <= src2_sel_i;
