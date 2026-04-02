@@ -128,7 +128,7 @@ assign dmem_read_ready          	= mem_to_reg;   // load instruction flag to rea
 assign dmem_write_ready         	= wb_mem_write; 	// flag to write into the memory
 assign dmem_write_data          	= wb_write_data;	// assigning data to write
 assign dmem_write_byte          	= wb_write_byte;	// flag for writing the data bytes
-assign dmem_read_data           	= dmem_read_data_temp;  	// data read from the memory
+// assign dmem_read_data           	= dmem_read_data_temp;  	// data read from the memory
 assign dmem_read_valid_checker  	= 1'b1;
 // -----------------------------------------------------//
 
@@ -368,6 +368,8 @@ conv_accelerator my_conv (
 // arrives at the WB stage at the exact same time as DMEM data.
 reg [31:0] coproc_read_data_reg;
 reg        is_coproc_raddr_reg;
+
+assign dmem_read_data = is_coproc_raddr_reg ? coproc_read_data_reg : dmem_read_data_temp;
 
 always @(posedge clk or negedge reset) begin
     if (!reset) begin
