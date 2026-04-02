@@ -1,36 +1,41 @@
 `timescale 1ns / 1ps
 
-module dual_port_vram (
+module dual_port_vram #(
+    parameter integer PIXEL_COUNT = 19200,
+    parameter integer ADDR_WIDTH  = 15
+)(
     input wire clk,
-    
-    // Port A: CPU (Write Only for this demo)
+
+    // Port A: CPU write port
     input wire we_a,
-    input wire [14:0] addr_a, // 160 * 120 = 19200 addresses
-    input wire [7:0] din_a,   // 8-bit grayscale pixel
-    
-    // Port B: VGA Controller (Read Only)
-    input wire [14:0] addr_b,
+    input wire [ADDR_WIDTH-1:0] addr_a,
+    input wire [7:0] din_a,
+
+    // Port B: VGA read port
+    input wire [ADDR_WIDTH-1:0] addr_b,
     output reg [7:0] dout_b
 );
 
-    // Tell Vivado explicitly to use physical Block RAM, not logic gates
-    (* ram_style = "block" *) 
-    reg [7:0] ram [0:19199];
+    (* ram_style = "block" *)
+    reg [7:0] ram [0:PIXEL_COUNT-1];
 
-    // Initialize to black
     integer i;
     initial begin
-        for (i = 0; i < 19200; i = i + 1)
+        for (i = 0; i < PIXEL_COUNT; i = i + 1) begin
             ram[i] = 8'h00;
+        end
     end
 
     always @(posedge clk) begin
-        // CPU writes to Port A
-        if (we_a) begin
+        if (we_a && (addr_a < PIXEL_COUNT)) begin
             ram[addr_a] <= din_a;
         end
-        // VGA constantly reads from Port B
-        dout_b <= ram[addr_b];
+
+        if (addr_b < PIXEL_COUNT) begin
+            dout_b <= ram[addr_b];
+        end else begin
+            dout_b <= 8'h00;
+        end
     end
 
 endmodule
