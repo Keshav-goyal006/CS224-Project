@@ -7,10 +7,11 @@ OBJDUMP = riscv-none-elf-objdump
 OBJCOPY = riscv-none-elf-objcopy
 READELF = riscv-none-elf-readelf
 
-
+# CC_FOR_VISION = riscv32-unknown-elf-gcc
+CC_FOR_VISION = riscv-none-elf-gcc
 #///// flags for RV32i architecture///////////////////
 CFLAGS  = -march=rv32im -mabi=ilp32
-
+CFLAGS_FOR_VISION =-march=rv32i -mabi=ilp32 -ffreestanding -nostdlib -O0
 
 #////Source for c code file ///////////////////////////
 SRC_ADDITION     = code_addition.c
@@ -63,11 +64,23 @@ xor: $(SRC_XOR)
 	cd imem_dmem && python bin2hex.py
 
 # <--- NEW: Vision Compilation Target --->
+# vision: $(SRC_VISION)
+# 	$(CC) -c  $(SRC_VISION) $(CFLAGS_FOR_VISION)
+# 	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+# 	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
+# 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
+# 	cd imem_dmem && python bin2hex.py
+
 vision: $(SRC_VISION)
-	$(CC) -c  $(SRC_VISION) -o $(TARGET) $(CFLAGS)
-	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
-	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
+	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.S $(SRC_VISION) -o vision.elf
+	
+	# Extract exactly the instructions for IMEM
+	$(OBJCOPY) -O binary -j .text -j .text.init vision.elf ./imem_dmem/imem.bin
+	
+	# Extract ALL initialized data for DMEM
+	$(OBJCOPY) -O binary -j .data -j .sdata -j .rodata vision.elf ./imem_dmem/dmem.bin
+	
+	$(OBJDUMP) -d vision.elf > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
 # /////clean function
