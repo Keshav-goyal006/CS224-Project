@@ -355,9 +355,25 @@ conv_accelerator my_conv (
     .rdata(coproc_read_data)
 );
 
-// Multiplex the read data back to the CPU
-wire [31:0] final_read_data = is_coproc_raddr ? coproc_read_data : dmem_read_data_temp;
+// --- PIPELINE ALIGNMENT FIX ---
+// DMEM has a 1-cycle read latency. The coprocessor read is instant (0-cycle).
+// We must register the coprocessor output to delay it by 1 cycle so it 
+// arrives at the WB stage at the exact same time as DMEM data.
+reg [31:0] coproc_read_data_reg;
+reg        is_coproc_raddr_reg;
 
+always @(posedge clk or negedge reset) begin
+    if (!reset) begin
+        coproc_read_data_reg <= 32'd0;
+        is_coproc_raddr_reg  <= 1'b0;
+    end else begin
+        coproc_read_data_reg <= coproc_read_data;
+        is_coproc_raddr_reg  <= is_coproc_raddr;
+    end
+end
+
+// Multiplex the delayed data back to the CPU
+wire [31:0] final_read_data = is_coproc_raddr_reg ? coproc_read_data_reg : dmem_read_data_temp;
 
 // -------------------------------------------------------------------------
 // LED Memory Mapped Register (Mapped to 0x3000)
