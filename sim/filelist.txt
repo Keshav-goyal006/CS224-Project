@@ -1,4 +1,7 @@
-
+../modules/IF_ID.v
+../modules/execute.v
+../modules/wb.v
+../modules/memory.v
+../modules/conv_accelerator.v
 ../modules/pipeline.v
 ../modules/tb_pipeline.v
-../modules/memory.v

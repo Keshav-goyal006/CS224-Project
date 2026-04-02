@@ -13,6 +13,7 @@ module top_fpga #(
 );
 
     wire [15:0] pc_disp = pipe_u.inst_fetch_pc[15:0];
+    wire [15:0] led_internal;
     wire [31:0] pc_out_w;   
 //    assign led = pc_out_w[15:0];
     wire exception;
@@ -62,7 +63,7 @@ module top_fpga #(
 	assign inst_mem_is_valid = 1'b1;
 	assign dmem_write_valid  = 1'b1;
 	assign dmem_read_valid   = 1'b1;
-    assign led = pc_disp;
+    assign led = led_internal;
 
 ////////////////////////////////////////////////////////////
 // PIPELINE CPU
@@ -88,7 +89,9 @@ pipe pipe_u (
     .dmem_write_ready    (dmem_write_ready),
     .dmem_write_address  (dmem_write_address),
     .dmem_write_data     (dmem_write_data),
-    .dmem_write_byte     (dmem_write_byte)
+    .dmem_write_byte     (dmem_write_byte),
+
+    .led_out             (led_internal)
 );
 
 

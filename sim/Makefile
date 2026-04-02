@@ -10,13 +10,13 @@ XVLOG = xvlog
 XELAB = xelab
 XSIM  = xsim
 
-.PHONY: help clean sort addition negative fibonacci xor
+.PHONY: help clean sort addition negative fibonacci xor vision
 
 help:
-	@echo "Usage: make <program_name> (e.g. make addition)"
+	@echo "Usage: make <program_name> (e.g. make addition or make vision)"
 
 # Generic Rule for all programs
-sort addition negative fibonacci xor:
+sort addition negative fibonacci xor vision:
 	# 1. Generate Hex Files
 	$(MAKE) clean -C $(MEM_GEN)
 	$(MAKE) $@ -C $(MEM_GEN)
@@ -29,9 +29,13 @@ sort addition negative fibonacci xor:
 	# 3. Run Simulation (log to stdout to see $display)
 	$(XSIM) $(SNAPSHOT) -runall -log stdout
 
-# 	$(XSIM) $(SNAPSHOT) -R
+#   $(XSIM) $(SNAPSHOT) -R
 
+# /////clean function
 clean:
 	@rm -rf xsim.dir/ .Xil/
 	@rm -f xvlog.log xvlog.pb xelab.log xelab.pb xsim.log xsim.jou xsim.pb
 	@rm -f pipeline.vcd
+	@rm -f imem.hex dmem.hex # <--- NEW: Cleans up the copied hex files in this dir
+	@rm -f riscv_sim.wdb # <--- NEW: Cleans up the waveform database file
+	@rm -f stdout
