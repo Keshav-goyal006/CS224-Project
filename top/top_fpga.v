@@ -6,6 +6,7 @@ module top_fpga #(
 )(
     input  wire clk,        // fast board clock (100 MHz)
     input  wire reset,      // active-low reset
+    input  wire [15:0] sw,
     output [15:0] led,
     
     // --- NEW: VGA PINS ---
@@ -71,18 +72,32 @@ module top_fpga #(
         .dmem_write_address  (dmem_write_address),
         .dmem_write_data     (dmem_write_data),
         .dmem_write_byte     (dmem_write_byte),
+        .switch_in           (sw),
 
         .led_out             (led_internal)
     );
 
     instr_mem IMEM (.clk(clk_25MHz), .pc(inst_mem_address), .instr(inst_mem_read_data));
-    data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_write_ready), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
+
+    wire is_dmem_write = dmem_write_ready &&
+                         (dmem_write_address >= 32'h00001000) &&
+                         (dmem_write_address <  32'h00002000);
+
+    wire is_dmem_read = dmem_read_ready &&
+                        (dmem_read_address >= 32'h00001000) &&
+                        (dmem_read_address <  32'h00002000);
+
+    data_mem  DMEM (.clk(clk_25MHz), .re(is_dmem_read), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(is_dmem_write), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
 
     // -----------------------------------------------------------------
     // VRAM AND VGA INTEGRATION
     // -----------------------------------------------------------------
-    // If the CPU writes to 0x4000XXXX, map it to VRAM instead of DMEM.
-    wire is_vram_write = (dmem_write_ready && dmem_write_address[31:16] == 16'h4000);
+    // CPU framebuffer writes are mapped to 0x5000-0x9B00.
+    wire is_vram_write = dmem_write_ready &&
+                         (dmem_write_address >= 32'h00005000) &&
+                         (dmem_write_address <  32'h00009B00);
+
+    wire [14:0] vram_write_addr = dmem_write_address - 32'h00005000;
     
     wire [9:0] vga_x;
     wire [9:0] vga_y;
@@ -95,8 +110,8 @@ module top_fpga #(
         
         // Port A: CPU Write
         .we_a   (is_vram_write),
-        .addr_a (dmem_write_address[14:0]), // CPU provides linear pixel index
-        .din_a  (dmem_write_data[7:0]),     // Write lower 8 bits (grayscale)
+        .addr_a (vram_write_addr),
+        .din_a  (dmem_write_data[7:0]),
         
         // Port B: VGA Read
         // Scale 640x480 to 160x120 by dividing X and Y by 4 (bit shifting by 2)

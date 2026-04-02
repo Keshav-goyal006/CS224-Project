@@ -39,10 +39,12 @@ wire    	inst_mem_is_valid;
 wire [31:0] dmem_read_data;
 wire    	dmem_write_valid;
 wire    	dmem_read_valid;
+wire [15:0] switch_in;
 
 assign inst_mem_is_valid = 1'b1;
 assign dmem_write_valid  = 1'b1;
 assign dmem_read_valid   = 1'b1;
+assign switch_in         = 16'h0000;
 
 ////////////////////////////////////////////////////////////
 // PIPE ↔ MEMORY WIRES
@@ -74,6 +76,7 @@ pipe DUT (
 	.dmem_read_data_temp(dmem_read_data),
 	.dmem_write_valid(dmem_write_valid),
 	.dmem_read_valid(dmem_read_valid),
+    .switch_in(switch_in),
 // TODO: Might have a few more port signals
     .inst_mem_address(inst_mem_address),
     .dmem_read_ready(dmem_read_ready),

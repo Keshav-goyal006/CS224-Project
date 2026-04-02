@@ -1,30 +1,49 @@
-/* link.ld */
-OUTPUT_ARCH( "riscv" )
+OUTPUT_ARCH("riscv")
 ENTRY(_start)
 
 MEMORY
 {
-  /* Instruction Memory: 4KB starting at 0x00000000 */
-  imem (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
-  /* Data Memory: 4KB. Mapped to 0x1000 so GCC doesn't overlap it with imem */
-  dmem (rwx) : ORIGIN = 0x00001000, LENGTH = 4K
+    IMEM (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
+    DMEM (rwx) : ORIGIN = 0x00001000, LENGTH = 4K
 }
+
+_stack_top = ORIGIN(DMEM) + LENGTH(DMEM);
 
 SECTIONS
 {
-  .text : {
-    *(.text.init) /* Make sure the startup code goes exactly at 0x00000000 */
-    *(.text*)
-  } > imem
+    .text : ALIGN(4)
+    {
+        KEEP(*(.text.init))
+        KEEP(*(.text.init.*))
+        *(.text*)
+    } > IMEM
 
-  .data : {
-    *(.data*)
-    *(.sdata*)
-    *(.rodata*)
-  } > dmem
+    .rodata : ALIGN(4)
+    {
+        *(.rodata*)
+        *(.srodata*)
+    } > DMEM
 
-  .bss : {
-    *(.bss*)
-    *(.sbss*)
-  } > dmem
+    .data : ALIGN(4)
+    {
+        PROVIDE(__global_pointer$ = ORIGIN(DMEM) + 0x800);
+        *(.data*)
+        *(.sdata*)
+    } > DMEM
+
+    .bss (NOLOAD) : ALIGN(4)
+    {
+        _sbss = .;
+        *(.bss*)
+        *(.sbss*)
+        *(COMMON)
+        _ebss = .;
+    } > DMEM
+
+    /DISCARD/ :
+    {
+        *(.comment)
+        *(.note*)
+        *(.eh_frame*)
+    }
 }
