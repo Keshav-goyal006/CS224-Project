@@ -12,7 +12,7 @@ module instr_mem (
 	// FPGA ROM initialization
 	// Initialize instruction memory from hex file (simulation / FPGA)
 	initial begin
-    	$readmemh("imem.hex", imem);
+    	$readmemh("D:/New/CS224/CS224-Project/mem_generator/imem_dmem/imem.hex", imem);
 	end
 
 	// Synchronous instruction fetch
@@ -54,7 +54,7 @@ module data_mem (
 	// Simulation / FPGA init
 	// TODO-DMEM-2: Initialize data memory from dmem.hex file
     initial begin
-        $readmemh("dmem.hex",dmem);
+        $readmemh("D:/New/CS224/CS224-Project/mem_generator/imem_dmem/dmem.hex",dmem);
     end
 	// -------------------------
 	// WRITE + READ (SYNC)
@@ -89,5 +89,18 @@ module data_mem (
     	end
     	// else: rdata holds value (exact match to original)
 	end
+	// always @(posedge clk) begin
+    //     // 1. BULLETPROOF WRITE: Ignore wstrb, just write the whole 32-bit word!
+    //     if (we) begin
+    //         dmem[windex] <= wdata;
+    //     end
+
+    //     // 2. BULLETPROOF READ: Always return data, ignore 're'
+    //     if (we && (rindex == windex)) begin
+    //         rdata <= wdata; // RAW forwarding
+    //     end else begin
+    //         rdata <= dmem[rindex];
+    //     end
+    // end
 
 endmodule

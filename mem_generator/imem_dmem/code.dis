@@ -12,69 +12,55 @@ Disassembly of section .text:
    8:	0000006f          	j	8 <end_loop>
 
 0000000c <main>:
-   c:	fe010113          	addi	sp,sp,-32 # 1fe0 <sample_pixels+0xfbc>
-  10:	00112e23          	sw	ra,28(sp)
-  14:	00812c23          	sw	s0,24(sp)
-  18:	02010413          	addi	s0,sp,32
-  1c:	fe042623          	sw	zero,-20(s0)
-  20:	04c0006f          	j	6c <main+0x60>
-  24:	000017b7          	lui	a5,0x1
-  28:	00078713          	mv	a4,a5
-  2c:	fec42783          	lw	a5,-20(s0)
-  30:	00279793          	slli	a5,a5,0x2
-  34:	00f707b3          	add	a5,a4,a5
-  38:	0007a783          	lw	a5,0(a5) # 1000 <edge_kernel>
-  3c:	fef42223          	sw	a5,-28(s0)
-  40:	00000013          	nop
+   c:	ff010113          	addi	sp,sp,-16 # 1ff0 <SIM_TRAP+0x1f08>
+  10:	00112623          	sw	ra,12(sp)
+  14:	00812423          	sw	s0,8(sp)
+  18:	00912223          	sw	s1,4(sp)
+  1c:	01212023          	sw	s2,0(sp)
+  20:	01010413          	addi	s0,sp,16
+  24:	00000493          	li	s1,0
+  28:	0300006f          	j	58 <main+0x4c>
+  2c:	00002737          	lui	a4,0x2
+  30:	00048793          	mv	a5,s1
+  34:	00279793          	slli	a5,a5,0x2
+  38:	00f707b3          	add	a5,a4,a5
+  3c:	00100713          	li	a4,1
+  40:	00e7a023          	sw	a4,0(a5)
   44:	00000013          	nop
-  48:	00002737          	lui	a4,0x2
-  4c:	fec42783          	lw	a5,-20(s0)
-  50:	00279793          	slli	a5,a5,0x2
-  54:	00f707b3          	add	a5,a4,a5
-  58:	fe442703          	lw	a4,-28(s0)
-  5c:	00e7a023          	sw	a4,0(a5)
-  60:	fec42783          	lw	a5,-20(s0)
-  64:	00178793          	addi	a5,a5,1
-  68:	fef42623          	sw	a5,-20(s0)
-  6c:	fec42703          	lw	a4,-20(s0)
-  70:	00800793          	li	a5,8
-  74:	fae7d8e3          	bge	a5,a4,24 <main+0x18>
-  78:	fe042623          	sw	zero,-20(s0)
-  7c:	0500006f          	j	cc <main+0xc0>
-  80:	000017b7          	lui	a5,0x1
-  84:	02478713          	addi	a4,a5,36 # 1024 <sample_pixels>
-  88:	fec42783          	lw	a5,-20(s0)
-  8c:	00279793          	slli	a5,a5,0x2
-  90:	00f707b3          	add	a5,a4,a5
-  94:	0007a783          	lw	a5,0(a5)
-  98:	fef42223          	sw	a5,-28(s0)
-  9c:	00000013          	nop
-  a0:	00000013          	nop
-  a4:	000027b7          	lui	a5,0x2
-  a8:	04078713          	addi	a4,a5,64 # 2040 <sample_pixels+0x101c>
-  ac:	fec42783          	lw	a5,-20(s0)
-  b0:	00279793          	slli	a5,a5,0x2
-  b4:	00f707b3          	add	a5,a4,a5
-  b8:	fe442703          	lw	a4,-28(s0)
-  bc:	00e7a023          	sw	a4,0(a5)
-  c0:	fec42783          	lw	a5,-20(s0)
-  c4:	00178793          	addi	a5,a5,1
-  c8:	fef42623          	sw	a5,-20(s0)
-  cc:	fec42703          	lw	a4,-20(s0)
-  d0:	00800793          	li	a5,8
-  d4:	fae7d6e3          	bge	a5,a4,80 <main+0x74>
-  d8:	00000013          	nop
-  dc:	000027b7          	lui	a5,0x2
-  e0:	08078793          	addi	a5,a5,128 # 2080 <sample_pixels+0x105c>
-  e4:	0007a783          	lw	a5,0(a5)
-  e8:	fef42423          	sw	a5,-24(s0)
-  ec:	00000013          	nop
-  f0:	000047b7          	lui	a5,0x4
-  f4:	fe842703          	lw	a4,-24(s0)
-  f8:	00e7a023          	sw	a4,0(a5) # 4000 <sample_pixels+0x2fdc>
-  fc:	00000793          	li	a5,0
- 100:	00078513          	mv	a0,a5
- 104:	01c12083          	lw	ra,28(sp)
- 108:	01812403          	lw	s0,24(sp)
- 10c:	02010113          	addi	sp,sp,32
- 110:	00008067          	ret
+  48:	00000013          	nop
+  4c:	00048793          	mv	a5,s1
+  50:	00178793          	addi	a5,a5,1
+  54:	00078493          	mv	s1,a5
+  58:	00048713          	mv	a4,s1
+  5c:	00800793          	li	a5,8
+  60:	fce7d6e3          	bge	a5,a4,2c <main+0x20>
+  64:	00000493          	li	s1,0
+  68:	0340006f          	j	9c <main+0x90>
+  6c:	000027b7          	lui	a5,0x2
+  70:	04078713          	addi	a4,a5,64 # 2040 <SIM_TRAP+0x1f58>
+  74:	00048793          	mv	a5,s1
+  78:	00279793          	slli	a5,a5,0x2
+  7c:	00f707b3          	add	a5,a4,a5
+  80:	00a00713          	li	a4,10
+  84:	00e7a023          	sw	a4,0(a5)
+  88:	00000013          	nop
+  8c:	00000013          	nop
+  90:	00048793          	mv	a5,s1
+  94:	00178793          	addi	a5,a5,1
+  98:	00078493          	mv	s1,a5
+  9c:	00048713          	mv	a4,s1
+  a0:	00800793          	li	a5,8
+  a4:	fce7d4e3          	bge	a5,a4,6c <main+0x60>
+  a8:	00000013          	nop
+  ac:	00000013          	nop
+  b0:	000027b7          	lui	a5,0x2
+  b4:	08078793          	addi	a5,a5,128 # 2080 <SIM_TRAP+0x1f98>
+  b8:	0007a783          	lw	a5,0(a5)
+  bc:	00078913          	mv	s2,a5
+  c0:	00000013          	nop
+  c4:	00000013          	nop
+  c8:	00000013          	nop
+  cc:	000047b7          	lui	a5,0x4
+  d0:	00090713          	mv	a4,s2
+  d4:	00e7a023          	sw	a4,0(a5) # 4000 <SIM_TRAP+0x3f18>
+  d8:	0000006f          	j	d8 <main+0xcc>

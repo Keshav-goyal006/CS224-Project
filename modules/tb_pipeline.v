@@ -1,162 +1,552 @@
+// `timescale 1ns / 1ps
+
+// module tb_pipeline;
+
+// ////////////////////////////////////////////////////////////
+// // CLOCK & RESET
+// ////////////////////////////////////////////////////////////
+// reg clk;
+// reg reset;
+
+// // 100 MHz clock
+// initial begin
+// 	clk = 0;
+// 	forever #5 clk = ~clk;
+// end
+
+// // reset (active low in our CPU)
+// initial begin
+// 	reset = 0;
+// 	#100;
+// 	reset = 1;
+// end
+
+// initial begin
+//     // Specify the name of the output VCD file
+//     $dumpfile("pipeline.vcd");
+    
+//     // Dump all variables in the testbench and its instantiated modules
+//     // '0' means all levels of hierarchy. 
+//     // Replace 'tb_file' with the actual name of your testbench module if it's different.
+//     $dumpvars(0, tb_pipeline); 
+// end
+// ////////////////////////////////////////////////////////////
+// // PIPE ↔ MEMORY SIGNALS
+// ////////////////////////////////////////////////////////////
+// wire [31:0] inst_mem_read_data;
+// wire    	inst_mem_is_valid;
+
+// wire [31:0] dmem_read_data;
+// wire    	dmem_write_valid;
+// wire    	dmem_read_valid;
+
+// assign inst_mem_is_valid = 1'b1;
+// assign dmem_write_valid  = 1'b1;
+// assign dmem_read_valid   = 1'b1;
+
+// ////////////////////////////////////////////////////////////
+// // PIPE ↔ MEMORY WIRES
+// ////////////////////////////////////////////////////////////
+// // wire [31:0] inst_mem_address;
+// // wire        dmem_read_ready;
+// // wire [31:0] dmem_read_address;
+// // wire        dmem_write_ready;
+// // wire [31:0] dmem_write_address;
+// // wire [31:0] dmem_write_data;
+// // wire [3:0]  dmem_write_byte;
+
+// wire exception;
+
+// // =================================================================
+//     // 1. CPU PIPELINE
+//     // =================================================================
+//     wire [31:0] cpu_rdata_mux;
+//     wire [31:0] inst_mem_address;
+//     wire [31:0] dmem_read_address, dmem_write_address, dmem_write_data;
+//     wire [3:0]  dmem_write_byte;
+//     wire        dmem_read_ready, dmem_write_ready;
+
+//     pipe pipe_u (
+//         .clk                 (clk),
+//         .reset               (reset),
+//         .stall               (1'b0),
+//         .exception           (exception),
+//         .pc_out              (),
+        
+//         .inst_mem_is_valid   (1'b1),
+//         .inst_mem_read_data  (inst_mem_read_data),
+//         .inst_mem_address    (inst_mem_address),
+        
+//         .dmem_read_valid     (1'b1),
+//         .dmem_read_data_temp (cpu_rdata_mux), // <--- CPU reads from the Interconnect!
+//         .dmem_read_ready     (dmem_read_ready),
+//         .dmem_read_address   (dmem_read_address),
+        
+//         .dmem_write_valid    (1'b1),
+//         .dmem_write_ready    (dmem_write_ready),
+//         .dmem_write_address  (dmem_write_address),
+//         .dmem_write_data     (dmem_write_data),
+//         .dmem_write_byte     (dmem_write_byte)
+//     );
+
+//     // =================================================================
+//     // 2. SOC INTERCONNECT
+//     // =================================================================
+//     wire dmem_we_actual, accel_we, vram_we, led_we, uart_we, sim_trap_we;
+//     wire [31:0] accel_rdata;
+//     wire tx_active;
+//     wire uart_txd; // Dummy wire for simulation
+
+//     soc_interconnect bus (
+//         .cpu_waddr  (dmem_write_address), 
+//         .cpu_raddr  (dmem_read_address),  
+//         .cpu_wdata  (dmem_write_data),
+//         .cpu_we     (dmem_write_ready), 
+//         .cpu_re     (dmem_read_ready),
+//         .cpu_rdata  (cpu_rdata_mux),     
+
+//         .dmem_we    (dmem_we_actual),
+//         .vram_we    (vram_we),
+//         .accel_we   (accel_we),
+//         .led_we     (led_we),
+//         .uart_we    (uart_we),
+//         .sim_trap_we(sim_trap_we),
+
+//         .dmem_rdata (dmem_read_data),
+//         .vram_rdata (8'b0), // We don't need VRAM/VGA in simulation
+//         .accel_rdata(accel_rdata),
+//         .uart_rdata ({31'b0, tx_active}) 
+//     );
+
+//     // =================================================================
+//     // 3. HARDWARE ACCELERATOR
+//     // =================================================================
+//     conv_accelerator my_conv (
+//         .clk    (clk),
+//         .reset  (reset),
+//         .we     (accel_we),
+//         .waddr  (dmem_write_address),
+//         .wdata  (dmem_write_data),
+//         .raddr  (dmem_read_address),
+//         .rdata  (accel_rdata)
+//     );
+
+//     // =================================================================
+//     // 4. UART TRANSMITTER
+//     // =================================================================
+//     // (Required so the C-code doesn't freeze while checking tx_status)
+//     uart_tx my_uart (
+//         .clk        (clk),
+//         .reset      (reset),
+//         .tx_start   (uart_we), 
+//         .tx_data    (dmem_write_data[7:0]),
+//         .tx_active  (tx_active),
+//         .tx_serial  (uart_txd) 
+//     );
+
+//     // =================================================================
+//     // 5. MEMORY
+//     // =================================================================
+//     instr_mem IMEM (.clk(clk), .pc(inst_mem_address), .instr(inst_mem_read_data));
+    
+//     data_mem DMEM (
+//         .clk(clk), 
+//         .re(dmem_read_ready), 
+//         .raddr(dmem_read_address), 
+//         .rdata(dmem_read_data), 
+//         .we(dmem_we_actual), // <--- Protected by the interconnect
+//         .waddr(dmem_write_address), 
+//         .wdata(dmem_write_data), 
+//         .wstrb(dmem_write_byte)
+//     );
+// ////////////////////////////////////////////////////////////
+// // DUT : PIPELINE CPU
+// ////////////////////////////////////////////////////////////
+// // pipe DUT (
+// // 	.clk(clk),
+// // 	.reset(reset),
+// // 	.stall(1'b0),
+// // 	.exception(exception),
+// //     .pc_out(),
+    
+// // 	.inst_mem_is_valid(inst_mem_is_valid),
+// // 	.inst_mem_read_data(inst_mem_read_data),
+
+// // 	.dmem_read_data_temp(dmem_read_data),
+// // 	.dmem_write_valid(dmem_write_valid),
+// // 	.dmem_read_valid(dmem_read_valid),
+// // // TODO: Might have a few more port signals
+// //     .inst_mem_address(inst_mem_address),
+// //     .dmem_read_ready(dmem_read_ready),
+// //     .dmem_read_address(dmem_read_address),
+// //     .dmem_write_ready(dmem_write_ready),
+// //     .dmem_write_address(dmem_write_address),
+// //     .dmem_write_data(dmem_write_data),
+// //     .dmem_write_byte(dmem_write_byte)
+// // );
+
+
+// // ////////////////////////////////////////////////////////////
+// // // INSTRUCTION MEMORY  (matches instr_mem.v)
+// // ////////////////////////////////////////////////////////////
+// // instr_mem IMEM (
+// // 	.clk(clk),
+// // 	.pc(inst_mem_address),
+// // //	.pc(TODO: Add inst_mem_address as a port signal from the pipe),
+// // 	.instr(inst_mem_read_data)
+// // );
+
+
+// // ////////////////////////////////////////////////////////////
+// // // DATA MEMORY  (matches data_mem.v)
+// // ////////////////////////////////////////////////////////////
+// // data_mem DMEM (
+// // 	.clk(clk),
+// //     .re(dmem_read_ready),
+// //     .raddr(dmem_read_address),
+// // //	.re(TODO: Add dmem_read_ready as a port signal from the pipe),
+// // //	.raddr(TODO),
+// // 	.rdata(dmem_read_data),
+// //     .we(dmem_write_ready),
+// //     .waddr(dmem_write_address),
+// //     .wdata(dmem_write_data),
+// //     .wstrb(dmem_write_byte)
+// // //	.we(TODO: Add dmem_write_ready as a port signal from the pipe),
+// // //	.waddr(TODO),
+// // //	.wdata(TODO),
+// // //	.wstrb(TODO: Add dmem_write_byte as a port signal from the pipe)
+// // );
+
+
+// ////////////////////////////////////////////////////////////
+// // SIMULATION TIME
+// ////////////////////////////////////////////////////////////
+// initial begin
+// 	#20000;   // run long enough to see program execute
+// 	$finish;
+// end
+
+// ////////////////////////////////////////////////////////////
+// // PRINT PIPELINE OUTPUT & STOP CONDITION
+// ////////////////////////////////////////////////////////////
+// reg program_started = 0;
+
+// always @(posedge clk) begin
+//     // Only run if the processor is active (reset is off)
+//     if (reset == 1) begin
+        
+//         // 1. Spy on Data Memory Writes to print the results
+//         if (dmem_write_ready) begin
+//             $display("time:\t\t%0d ,result =\t\t%0d", $time, dmem_write_data);
+//         end
+        
+//         // 2. Stop the simulation if it loops back to the beginning
+//         if (program_started == 1 && inst_mem_address == 32'h00000000) begin
+//             $display("All instructions are Fetched");
+//             $display("next_pc = %08x", inst_mem_address);
+//             $finish;
+//         end
+        
+//         // 3. Track that the program has safely started
+//         if (inst_mem_address > 0) begin
+//             program_started = 1;
+//         end
+        
+//         // 4. Print the PC every cycle
+//         $display("next_pc = %08x", inst_mem_address);
+//     end
+// end
+
+// ////////////////////////////////////////////////////////////
+// // SPY ON THE UART & CATCH THE 19,200 PIXELS
+// ////////////////////////////////////////////////////////////
+// integer file_out;
+// integer pixel_count;
+
+// initial begin
+//     // Open a text file to save the pixels
+//     file_out = $fopen("simulated_pixels.txt", "w");
+//     pixel_count = 0;
+// end
+
+// always @(posedge clk) begin
+//     // In code_vision.c, the UART TX DATA register is at 0x00005000.
+//     // Whenever the CPU writes to this address, intercept the pixel!
+//     if (dmem_write_ready && dmem_write_address == 32'h00005000) begin
+        
+//         // Write the 8-bit pixel to the text file
+//         $fdisplay(file_out, "%d", dmem_write_data[7:0]);
+//         pixel_count = pixel_count + 1;
+        
+//         // Print progress to the terminal every 1,000 pixels 
+//         // so you know the simulation hasn't frozen
+//         if (pixel_count % 1000 == 0) begin
+//             $display("Simulated %0d / 19200 pixels...", pixel_count);
+//         end
+
+//         // Once we hit exactly 160x120 pixels, stop the simulation!
+//         if (pixel_count == 19200) begin
+//             $display("SUCCESS: All 19,200 pixels generated!");
+//             $fclose(file_out);
+//             $finish;
+//         end
+//     end
+// end
+
+// endmodule
+
+
 `timescale 1ns / 1ps
+
 
 module tb_pipeline;
 
-////////////////////////////////////////////////////////////
-// CLOCK & RESET
-////////////////////////////////////////////////////////////
-reg clk;
-reg reset;
+    ////////////////////////////////////////////////////////////
+    // CLOCK & RESET
+    ////////////////////////////////////////////////////////////
+    reg clk;
+    reg reset;
 
-// 100 MHz clock
-initial begin
-	clk = 0;
-	forever #5 clk = ~clk;
-end
+    // 100 MHz clock
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk;
+    end
 
-// reset (active low in our CPU)
-initial begin
-	reset = 0;
-	#100;
-	reset = 1;
-end
+    // reset (active low in our CPU)
+    initial begin
+        reset = 0;
+        #100;
+        reset = 1;
+    end
 
-initial begin
-    // Specify the name of the output VCD file
-    $dumpfile("pipeline.vcd");
-    
-    // Dump all variables in the testbench and its instantiated modules
-    // '0' means all levels of hierarchy. 
-    // Replace 'tb_file' with the actual name of your testbench module if it's different.
-    $dumpvars(0, tb_pipeline); 
-end
-////////////////////////////////////////////////////////////
-// PIPE ↔ MEMORY SIGNALS
-////////////////////////////////////////////////////////////
-wire [31:0] inst_mem_read_data;
-wire    	inst_mem_is_valid;
+    // initial begin
+    //     // Specify the name of the output VCD file
+    //     $dumpfile("pipeline.vcd");
+    //     // Dump all variables in the testbench and its instantiated modules
+    //     $dumpvars(0, tb_pipeline); 
+    // end
 
-wire [31:0] dmem_read_data;
-wire    	dmem_write_valid;
-wire    	dmem_read_valid;
-wire [15:0] switch_in;
+    ////////////////////////////////////////////////////////////
+    // PIPE <-> MEMORY SIGNALS
+    ////////////////////////////////////////////////////////////
+    wire [31:0] inst_mem_read_data;
+    wire [31:0] dmem_read_data;
+    wire exception;
 
-assign inst_mem_is_valid = 1'b1;
-assign dmem_write_valid  = 1'b1;
-assign dmem_read_valid   = 1'b1;
-assign switch_in         = 16'h0000;
+    // =================================================================
+    // 1. CPU PIPELINE
+    // =================================================================
+    wire [31:0] cpu_rdata_mux;
+    wire [31:0] inst_mem_address;
+    wire [31:0] dmem_read_address, dmem_write_address, dmem_write_data;
+    wire [3:0]  dmem_write_byte;
+    wire        dmem_read_ready, dmem_write_ready;
 
-////////////////////////////////////////////////////////////
-// PIPE ↔ MEMORY WIRES
-////////////////////////////////////////////////////////////
-wire [31:0] inst_mem_address;
-wire        dmem_read_ready;
-wire [31:0] dmem_read_address;
-wire        dmem_write_ready;
-wire [31:0] dmem_write_address;
-wire [31:0] dmem_write_data;
-wire [3:0]  dmem_write_byte;
-
-wire exception;
-
-
-////////////////////////////////////////////////////////////
-// DUT : PIPELINE CPU
-////////////////////////////////////////////////////////////
-pipe DUT (
-	.clk(clk),
-	.reset(reset),
-	.stall(1'b0),
-	.exception(exception),
-    .pc_out(),
-    
-	.inst_mem_is_valid(inst_mem_is_valid),
-	.inst_mem_read_data(inst_mem_read_data),
-
-	.dmem_read_data_temp(dmem_read_data),
-	.dmem_write_valid(dmem_write_valid),
-	.dmem_read_valid(dmem_read_valid),
-    .switch_in(switch_in),
-// TODO: Might have a few more port signals
-    .inst_mem_address(inst_mem_address),
-    .dmem_read_ready(dmem_read_ready),
-    .dmem_read_address(dmem_read_address),
-    .dmem_write_ready(dmem_write_ready),
-    .dmem_write_address(dmem_write_address),
-    .dmem_write_data(dmem_write_data),
-    .dmem_write_byte(dmem_write_byte)
-);
-
-
-////////////////////////////////////////////////////////////
-// INSTRUCTION MEMORY  (matches instr_mem.v)
-////////////////////////////////////////////////////////////
-instr_mem IMEM (
-	.clk(clk),
-	.pc(inst_mem_address),
-//	.pc(TODO: Add inst_mem_address as a port signal from the pipe),
-	.instr(inst_mem_read_data)
-);
-
-
-////////////////////////////////////////////////////////////
-// DATA MEMORY  (matches data_mem.v)
-////////////////////////////////////////////////////////////
-data_mem DMEM (
-	.clk(clk),
-    .re(dmem_read_ready),
-    .raddr(dmem_read_address),
-//	.re(TODO: Add dmem_read_ready as a port signal from the pipe),
-//	.raddr(TODO),
-	.rdata(dmem_read_data),
-    .we(dmem_write_ready),
-    .waddr(dmem_write_address),
-    .wdata(dmem_write_data),
-    .wstrb(dmem_write_byte)
-//	.we(TODO: Add dmem_write_ready as a port signal from the pipe),
-//	.waddr(TODO),
-//	.wdata(TODO),
-//	.wstrb(TODO: Add dmem_write_byte as a port signal from the pipe)
-);
-
-
-////////////////////////////////////////////////////////////
-// SIMULATION TIME
-////////////////////////////////////////////////////////////
-initial begin
-	#20000;   // run long enough to see program execute
-	$finish;
-end
-
-////////////////////////////////////////////////////////////
-// PRINT PIPELINE OUTPUT & STOP CONDITION
-////////////////////////////////////////////////////////////
-reg program_started = 0;
-
-always @(posedge clk) begin
-    // Only run if the processor is active (reset is off)
-    if (reset == 1) begin
+    pipe pipe_u (
+        .clk                 (clk),
+        .reset               (reset),
+        .stall               (1'b0),
+        .exception           (exception),
+        .pc_out              (),
         
-        // 1. Spy on Data Memory Writes to print the results
-        if (dmem_write_ready) begin
-            $display("time:\t\t%0d ,result =\t\t%0d", $time, dmem_write_data);
+        .inst_mem_is_valid   (1'b1),
+        .inst_mem_read_data  (inst_mem_read_data),
+        .inst_mem_address    (inst_mem_address),
+        
+        .dmem_read_valid     (1'b1),
+        .dmem_read_data_temp (cpu_rdata_mux), // <--- CPU reads from the Interconnect!
+        .dmem_read_ready     (dmem_read_ready),
+        .dmem_read_address   (dmem_read_address),
+        
+        .dmem_write_valid    (1'b1),
+        .dmem_write_ready    (dmem_write_ready),
+        .dmem_write_address  (dmem_write_address),
+        .dmem_write_data     (dmem_write_data),
+        .dmem_write_byte     (dmem_write_byte)
+    );
+
+    // =================================================================
+    // 2. SOC INTERCONNECT
+    // =================================================================
+    wire dmem_we_actual, accel_we, vram_we, led_we, uart_we, sim_trap_we;
+    wire [31:0] accel_rdata;
+    wire tx_active;
+    wire uart_txd; // Dummy wire for simulation
+
+    soc_interconnect bus (
+        .cpu_waddr  (dmem_write_address), 
+        .cpu_raddr  (dmem_read_address),  
+        .cpu_wdata  (dmem_write_data),
+        .cpu_we     (dmem_write_ready), 
+        .cpu_re     (dmem_read_ready),
+        .cpu_rdata  (cpu_rdata_mux),     
+
+        .dmem_we    (dmem_we_actual),
+        .vram_we    (vram_we),
+        .accel_we   (accel_we),
+        .led_we     (led_we),
+        .uart_we    (uart_we),
+        .sim_trap_we(sim_trap_we),
+
+        .dmem_rdata (dmem_read_data),
+        .vram_rdata (8'b0), // We don't need VRAM/VGA in simulation
+        .accel_rdata(accel_rdata),
+        .uart_rdata ({31'b0, tx_active}) 
+    );
+
+    // =================================================================
+    // 3. HARDWARE ACCELERATOR
+    // =================================================================
+    conv_accelerator my_conv (
+        .clk    (clk),
+        .reset  (reset),
+        .we     (accel_we),
+        .waddr  (dmem_write_address),
+        .wdata  (dmem_write_data),
+        .raddr  (dmem_read_address),
+        .rdata  (accel_rdata)
+    );
+
+    // =================================================================
+    // 4. UART TRANSMITTER
+    // =================================================================
+    uart_tx #( .CLKS_PER_BIT(2) ) my_uart (
+        .clk        (clk),
+        .reset      (reset),
+        .tx_start   (uart_we), 
+        .tx_data    (dmem_write_data[7:0]),
+        .tx_active  (tx_active),
+        .tx_serial  (uart_txd) 
+    );
+
+    // =================================================================
+    // 5. MEMORY
+    // =================================================================
+    instr_mem IMEM (.clk(clk), .pc(inst_mem_address), .instr(inst_mem_read_data));
+    
+    data_mem DMEM (
+        .clk(clk), 
+        .re(dmem_read_ready), 
+        .raddr(dmem_read_address), 
+        .rdata(dmem_read_data), 
+        .we(dmem_we_actual), // Protected by the interconnect
+        .waddr(dmem_write_address), 
+        .wdata(dmem_write_data), 
+        .wstrb(dmem_write_byte)
+    );
+
+    ////////////////////////////////////////////////////////////
+    // PRINT PIPELINE OUTPUT & STOP CONDITION
+    ////////////////////////////////////////////////////////////
+    reg program_started = 0;
+
+    always @(posedge clk) begin
+        // Only run if the processor is active (reset is off)
+        if (reset == 1) begin
+            
+            // Stop the simulation if it loops back to the beginning
+            if (program_started == 1 && inst_mem_address == 32'h00000000) begin
+                $display("All instructions are Fetched - CPU Looped back to 0x0.");
+                $finish;
+            end
+            
+            // Track that the program has safely started
+            if (inst_mem_address > 0) begin
+                program_started = 1;
+            end
         end
-        
-        // 2. Stop the simulation if it loops back to the beginning
-        if (program_started == 1 && inst_mem_address == 32'h00000000) begin
-            $display("All instructions are Fetched");
-            $display("next_pc = %08x", inst_mem_address);
+    end
+
+    ////////////////////////////////////////////////////////////
+    // SPY ON THE UART & CATCH THE 19,200 PIXELS
+    ////////////////////////////////////////////////////////////
+    integer file_out;
+    integer pixel_count;
+
+    initial begin
+        // Open a text file to save the pixels
+        file_out = $fopen("simulated_pixels.txt", "w");
+        pixel_count = 0;
+    end
+
+    always @(posedge clk) begin
+        // In code_vision.c, the UART TX DATA register is at 0x00005000.
+        // Whenever the CPU writes to this address, intercept the pixel!
+        if (dmem_write_ready && dmem_write_address == 32'h00005000) begin
+            
+            // Write the 8-bit pixel to the text file
+            $fdisplay(file_out, "%d", dmem_write_data[7:0]);
+            pixel_count = pixel_count + 1;
+            
+            // Print progress to the terminal every 1,000 pixels 
+            // so you know the simulation hasn't frozen
+            if (pixel_count % 1000 == 0) begin
+                $display("Simulated %0d / 19200 pixels...", pixel_count);
+            end
+
+            // Once we hit exactly 160x120 pixels, stop the simulation!
+            if (pixel_count == 19200) begin
+                $display("SUCCESS: All 19,200 pixels generated!");
+                $fclose(file_out);
+                $finish;
+            end
+        end
+    end
+
+////////////////////////////////////////////////////////////
+    // DEBUG: SANITY CHECKS & HEARTBEAT MONITOR
+    ////////////////////////////////////////////////////////////
+    
+    // 1. Check if the memory actually loaded!
+    initial begin
+        #10; // Wait 1 clock cycle
+        if (IMEM.imem[0] === 32'bx) begin
+            $display("===========================================================");
+            $display(" CRITICAL ERROR: imem.hex DID NOT LOAD!");
+            $display(" Check the absolute path in your memory.v file.");
+            $display("===========================================================");
+            $finish;
+        end else begin
+            $display("SUCCESS: imem.hex loaded correctly. CPU is starting...");
+        end
+    end
+
+    ////////////////////////////////////////////////////////////
+    // ACCELERATOR DIAGNOSTIC MONITOR
+    ////////////////////////////////////////////////////////////
+    always @(posedge clk) begin
+        if (dmem_write_ready && dmem_write_address == 32'h00004000) begin
+            $display("========================================");
+            $display(" ACCEL TEST RESULT: %d", dmem_write_data);
+            $display("========================================");
+            if (dmem_write_data == 90) 
+                $display(" STATUS: SUCCESS (Hardware MAC is working!)");
+            else if (dmem_write_data == 0)
+                $display(" STATUS: FAILED (Read returned 0. Check Interconnect/Hazards)");
+            else
+                $display(" STATUS: WRONG DATA (Check Accelerator logic)");
             $finish;
         end
-        
-        // 3. Track that the program has safely started
-        if (inst_mem_address > 0) begin
-            program_started = 1;
-        end
-        
-        // 4. Print the PC every cycle
-        $display("next_pc = %08x", inst_mem_address);
     end
-end
+
+    // 2. Track exactly where the CPU freezes
+    always @(posedge clk) begin
+        if (dmem_write_ready) begin
+            
+            // Did it successfully write the weights?
+            if (dmem_write_address == 32'h00002000)
+                $display("HEARTBEAT: CPU successfully started writing WEIGHTS...");
+            
+            // Did it successfully push the first pixel?
+            if (dmem_write_address == 32'h00002040)
+                $display("HEARTBEAT: CPU successfully pushed PIXEL to accelerator...");
+                
+            // Did it successfully trigger the UART?
+            if (dmem_write_address == 32'h00005000) begin
+                $display("HEARTBEAT: UART Transmitting pixel %0d...", pixel_count);
+            end
+        end
+    end
 
 endmodule

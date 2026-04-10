@@ -17,6 +17,10 @@ def bin2hex(in_file, out_file):
 		data = inputFile.read(chunk)
 		if not data:
 			break
+
+		if len(data) < chunk:
+			data += b'\x00' * (chunk - len(data))
+
 		data = struct.unpack("I",data)
 		outputFile.write(hexChange(str(hex(data[0]))) + " // 32'h" + hexChange(str(hex(j)))+ "\n")
 		j+=4

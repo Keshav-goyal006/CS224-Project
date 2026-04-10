@@ -14,7 +14,9 @@ module top_fpga #(
     output wire [3:0] vga_g,
     output wire [3:0] vga_b,
     output wire vga_hs,
-    output wire vga_vs
+    output wire vga_vs,
+
+    output wire uart_txd
 );
 
     wire [31:0] pc_out_w;   
@@ -63,7 +65,7 @@ module top_fpga #(
         .inst_mem_address    (inst_mem_address),
         
         .dmem_read_valid     (1'b1),
-        .dmem_read_data_temp (dmem_read_data),
+        .dmem_read_data_temp (cpu_rdata_mux), // Connect to interconnect mux
         .dmem_read_ready     (dmem_read_ready),
         .dmem_read_address   (dmem_read_address),
         
@@ -71,24 +73,65 @@ module top_fpga #(
         .dmem_write_ready    (dmem_write_ready),
         .dmem_write_address  (dmem_write_address),
         .dmem_write_data     (dmem_write_data),
-        .dmem_write_byte     (dmem_write_byte),
-        .switch_in           (sw),
+        .dmem_write_byte     (dmem_write_byte)
+    );
 
-        .led_out             (led_internal)
+
+    // -----------------------------------------------------------------
+    // SOC INTERCONNECT & PERIPHERALS
+    // -----------------------------------------------------------------
+    wire [31:0] cpu_rdata_mux;
+    wire dmem_we_actual, accel_we, vram_we;
+    wire [31:0] accel_rdata;
+    wire uart_we;
+    wire tx_active;
+
+    // 1. The Interconnect (Traffic Cop)
+    soc_interconnect bus (
+        .cpu_addr   (dmem_write_address), // CPU's requested address
+        .cpu_wdata  (dmem_write_data),
+        .cpu_we     (dmem_write_ready), 
+        .cpu_re     (dmem_read_ready),
+        .cpu_rdata  (cpu_rdata_mux),      // Sends the correct data back to CPU
+
+        // Enable signals mapped to specific peripherals
+        .dmem_we    (dmem_we_actual),
+        .vram_we    (vram_we),
+        .accel_we   (accel_we),
+        .led_we     (led_internal), // Hook this up to your LEDs if you want!
+        .uart_we    (uart_we),
+        .sim_trap_we(),
+
+        // Data returning from peripherals
+        .dmem_rdata (dmem_read_data),
+        .vram_rdata (vga_pixel_data), 
+        .accel_rdata(accel_rdata),
+        .uart_rdata ({31'b0, tx_active})
+    );
+
+    // 2. Your Hardware Accelerator
+    conv_accelerator my_conv (
+        .clk    (clk_25MHz),
+        .reset  (reset),
+        .we     (accel_we),
+        .waddr  (dmem_write_address),
+        .wdata  (dmem_write_data),
+        .raddr  (dmem_read_address),
+        .rdata  (accel_rdata)
+    );
+
+    uart_tx my_uart (
+        .clk        (clk_25MHz), // Using 25MHz clock
+        .reset      (reset),
+        .tx_start   (uart_we && (dmem_write_address == 32'h00005000)),
+        .tx_data    (dmem_write_data[7:0]),
+        .tx_active  (tx_active),
+        .tx_serial  (uart_txd) 
     );
 
     instr_mem IMEM (.clk(clk_25MHz), .pc(inst_mem_address), .instr(inst_mem_read_data));
-
-    wire is_dmem_write = dmem_write_ready &&
-                         (dmem_write_address >= 32'h00001000) &&
-                         (dmem_write_address <  32'h00002000);
-
-    wire is_dmem_read = dmem_read_ready &&
-                        (dmem_read_address >= 32'h00001000) &&
-                        (dmem_read_address <  32'h00002000);
-
-    data_mem  DMEM (.clk(clk_25MHz), .re(is_dmem_read), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(is_dmem_write), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
-
+    // data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_write_ready), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
+    data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_we_actual), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
     // -----------------------------------------------------------------
     // VRAM AND VGA INTEGRATION
     // -----------------------------------------------------------------

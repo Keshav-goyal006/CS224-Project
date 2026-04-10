@@ -6,3 +6,6 @@
 ../modules/vga_controller.v
 ../modules/pipeline.v
 ../modules/tb_pipeline.v
+../modules/uart_tx.v
+../modules/soc_interconnect.v
+../modules/vga_controller.v
