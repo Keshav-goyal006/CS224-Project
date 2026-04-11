@@ -8,7 +8,7 @@ def convert_image(input_filename, output_filename):
     with open(output_filename, 'w') as f:
         f.write("#include <stdint.h>\n\n")
         f.write("// 64x48 Grayscale Image (3072 Bytes)\n")
-        f.write(f"const uint8_t image_pixels[{len(pixels)}] = {{\n")
+        f.write(f"uint8_t image_pixels[{len(pixels)}] = {{\n")
         
         # Format it nicely into rows of 64
         for i in range(0, len(pixels), 64):

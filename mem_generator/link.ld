@@ -18,11 +18,12 @@ SECTIONS
   } > imem
 
   .data : {
-    *(.data*)
-    *(.sdata*)
-    *(.rodata*)
+    *(.data)
+    *(.sdata)
+    *(.rodata)    /* <--- THIS MUST BE IN THE DMEM SECTION! */
+    *(.srodata)
   } > dmem
-
+  
   .bss : {
     *(.bss*)
     *(.sbss*)

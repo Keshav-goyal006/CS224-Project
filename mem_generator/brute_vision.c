@@ -1,54 +1,68 @@
 #include <stdint.h>
+#include "image_data.h"
 
-// --- Hardware Memory Map ---
-volatile int32_t* const UART_TX_DATA = (int32_t*)0x00005000;
-volatile int32_t* const UART_TX_STAT = (int32_t*)0x00005004;
-
-// Helper to send a single character safely
-void uart_send_char(char c) {
-    // Wait until the UART hardware is NOT busy (Bit 0 == 0)
-    // The nops prevent Load-Use hazards in your pipeline
-    while ((*UART_TX_STAT & 0x01) == 1) {
-        asm volatile("nop"); asm volatile("nop");
-    }
-    
-    // Send the character
-    *UART_TX_DATA = c;
-    
-    // Give the hardware 1 cycle to raise the "Busy" flag 
-    asm volatile("nop");
-}
-
-// Helper to send a full string
-void uart_send_string(const char* str) {
-    // Loop until we hit the null terminator '\0'
-    // Because 'str' is a char pointer, GCC will automatically 
-    // use your newly fixed LBU instruction here!
-    while (*str != '\0') {
-        uart_send_char(*str);
-        str++;
-    }
-}
+// 4KB Memory Map Addresses
+volatile uint32_t* const ACCEL_PIX_IN  = (uint32_t*)0x00002024; 
+volatile uint32_t* const ACCEL_MAC_OUT = (uint32_t*)0x00002028; 
+volatile uint32_t* const UART_TX_DATA  = (uint32_t*)0x00005000;
+volatile uint32_t* const UART_TX_STAT  = (uint32_t*)0x00005004;
 
 int main() {
-    // Send the victory message!
-    uart_send_string("\n==============================\n");
-    uart_send_string("Hello from Custom RISC-V SoC!\n");
-    uart_send_string("Hardware LBU Support: ONLINE.\n");
-    uart_send_string("==============================\n");
+    register int i asm("s1");
+    register uint32_t final_pixel asm("s4");
+    
+    // THE BYPASS: Treat the 8-bit array as a 32-bit word array
+    // This prevents the CPU from trying to execute a faulty 'lbu' byte-load
+    uint32_t* words_array = (uint32_t*)image_pixels;
 
-    // Loop the alphabet forever to prove stability
-    char letter = 'A';
-    while(1) {
-        uart_send_char(letter);
-        letter++;
+    // ---------------------------------------------------------
+    // PHASE 1: WARM UP THE LINE BUFFERS (130 Pixels)
+    // We push the first 130 pixels but do NOT transmit the output yet,
+    // because the 3x3 window is still filling up.
+    // ---------------------------------------------------------
+    for (i = 0; i < 130; i++) {
+        int word_index = i >> 2; 
+        int byte_offset = i & 3; 
+        uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
         
-        // Reset back to 'A' and print a newline after 'Z'
-        if (letter > 'Z') {
-            letter = 'A';
-            uart_send_char('\n');
-        }
+        *ACCEL_PIX_IN = pixel_val;
+        asm volatile("nop"); asm volatile("nop"); asm volatile("nop");
     }
 
+    // ---------------------------------------------------------
+    // PHASE 2: PROCESS THE VALID IMAGE
+    // Push the remaining pixels, read the valid results, and transmit!
+    // ---------------------------------------------------------
+    for (i = 130; i < 3072; i++) {
+        int word_index = i >> 2; 
+        int byte_offset = i & 3; 
+        uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
+        
+        *ACCEL_PIX_IN = pixel_val;
+        asm volatile("nop"); asm volatile("nop"); asm volatile("nop");
+
+        final_pixel = *ACCEL_MAC_OUT;
+        
+        while ((*UART_TX_STAT & 0x01) == 1) { asm volatile("nop"); }
+        *UART_TX_DATA = final_pixel;
+    }
+
+    // ---------------------------------------------------------
+    // PHASE 3: FLUSH THE REMAINDER
+    // Push 130 dummy pixels (0) to force the last rows out of the FIFOs.
+    // (Total transmitted pixels: (3072 - 130) + 130 = exactly 3072!)
+    // ---------------------------------------------------------
+    for (i = 0; i < 130; i++) {
+        *ACCEL_PIX_IN = 0; 
+        asm volatile("nop"); asm volatile("nop"); asm volatile("nop");
+
+        final_pixel = *ACCEL_MAC_OUT;
+        
+        while ((*UART_TX_STAT & 0x01) == 1) { asm volatile("nop"); }
+        *UART_TX_DATA = final_pixel;
+    }
+
+    // Trap CPU
+    while(1); 
     return 0;
 }

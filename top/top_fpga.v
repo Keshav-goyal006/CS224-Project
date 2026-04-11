@@ -115,14 +115,26 @@ module top_fpga #(
     assign led = led_reg;
 
     // 2. Hardware Accelerator
-    conv_accelerator my_conv (
-        .clk    (clk_25MHz),
-        .reset  (reset),
-        .we     (accel_we),
-        .waddr  (dmem_write_address),
-        .wdata  (dmem_write_data),
-        .raddr  (dmem_read_address),
-        .rdata  (accel_rdata)
+    // conv_accelerator my_conv (
+    //     .clk    (clk_25MHz),
+    //     .reset  (reset),
+    //     .we     (accel_we),
+    //     .waddr  (dmem_write_address),
+    //     .wdata  (dmem_write_data),
+    //     .raddr  (dmem_read_address),
+    //     .rdata  (accel_rdata)
+    // );
+
+    // 2. Hardware Accelerator
+    stream_accel #(.IMG_WIDTH(64)) my_conv (
+        .clk      (clk_25MHz),
+        .reset    (reset),
+        .switches (sw[3:0]), // Pass the first 4 physical switches!
+        .we       (accel_we),
+        .waddr    (dmem_write_address),
+        .wdata    (dmem_write_data),
+        .raddr    (dmem_read_address),
+        .rdata    (accel_rdata)
     );
 
     // 3. UART Transmitter

@@ -9,3 +9,5 @@
 ../modules/uart_tx.v
 ../modules/soc_interconnect.v
 ../modules/vga_controller.v
+../modules/stream_accel.v
+../modules/line_buffer.v 

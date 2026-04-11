@@ -4,13 +4,31 @@
 # 100 MHz board clock
 set_property -dict { PACKAGE_PIN E3    IOSTANDARD LVCMOS33 } [get_ports { clk }]; 
 create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { clk }];
-
 ## -----------------------------------------------------------------
 ## Reset
 ## -----------------------------------------------------------------
 # Mapped to the CPU_RESETN button which is inherently active-low
 set_property -dict { PACKAGE_PIN C12   IOSTANDARD LVCMOS33 } [get_ports { reset }];
 
+##Switches
+set_property IOSTANDARD LVCMOS33 [get_ports sw[*]];
+
+set_property PACKAGE_PIN J15 [get_ports {sw[0]}];
+set_property PACKAGE_PIN L16 [get_ports {sw[1]}];
+set_property PACKAGE_PIN M13 [get_ports {sw[2]}];
+set_property PACKAGE_PIN R15 [get_ports {sw[3]}];
+set_property PACKAGE_PIN R17 [get_ports {sw[4]}];
+set_property PACKAGE_PIN T18 [get_ports {sw[5]}];
+set_property PACKAGE_PIN U18 [get_ports {sw[6]}];
+set_property PACKAGE_PIN R13 [get_ports {sw[7]}];
+set_property PACKAGE_PIN T8  [get_ports {sw[8]}];
+set_property PACKAGE_PIN U8  [get_ports {sw[9]}];
+set_property PACKAGE_PIN R16 [get_ports {sw[10]}];
+set_property PACKAGE_PIN T13 [get_ports {sw[11]}];
+set_property PACKAGE_PIN H6  [get_ports {sw[12]}];
+set_property PACKAGE_PIN U12 [get_ports {sw[13]}];
+set_property PACKAGE_PIN U11 [get_ports {sw[14]}];
+set_property PACKAGE_PIN V10 [get_ports {sw[15]}];
 ## -----------------------------------------------------------------
 ## LEDs (16 total)
 ## -----------------------------------------------------------------
@@ -58,3 +76,6 @@ set_property -dict { PACKAGE_PIN D8    IOSTANDARD LVCMOS33 } [get_ports { vga_b[
 # Sync Signals
 set_property -dict { PACKAGE_PIN B11   IOSTANDARD LVCMOS33 } [get_ports { vga_hs }];
 set_property -dict { PACKAGE_PIN B12   IOSTANDARD LVCMOS33 } [get_ports { vga_vs }];
+
+set_property CFGBVS VCCO [current_design];
+set_property CONFIG_VOLTAGE 3.3 [current_design];

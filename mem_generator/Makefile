@@ -19,7 +19,7 @@ SRC_SORT         = code_sort.c
 SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
-SRC_VISION       = code_vision.c      # <--- NEW: Added vision source
+SRC_VISION       = brute_vision.c      # <--- NEW: Added vision source
 # SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
 
 TARGET           = code.elf
