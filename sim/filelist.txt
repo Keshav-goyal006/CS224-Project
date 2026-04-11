@@ -11,3 +11,4 @@
 ../modules/vga_controller.v
 ../modules/stream_accel.v
 ../modules/line_buffer.v 
+../modules/stream_accel_5x5.v

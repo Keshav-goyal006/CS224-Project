@@ -126,17 +126,28 @@ module top_fpga #(
     // );
 
     // 2. Hardware Accelerator
-    stream_accel #(.IMG_WIDTH(64)) my_conv (
-        .clk      (clk_25MHz),
+    // stream_accel #(.IMG_WIDTH(64)) my_conv (
+    //     .clk      (clk_25MHz),
+    //     .reset    (reset),
+    //     .switches (sw[3:0]), // Pass the first 4 physical switches!
+    //     .we       (accel_we),
+    //     .waddr    (dmem_write_address),
+    //     .wdata    (dmem_write_data),
+    //     .raddr    (dmem_read_address),
+    //     .rdata    (accel_rdata)
+    // );
+
+    stream_accel_5x5 #(.IMG_WIDTH(64)) my_conv (
+        .clk      (clk),         // Use the raw testbench clock
         .reset    (reset),
-        .switches (sw[3:0]), // Pass the first 4 physical switches!
+        .switches (sw),          // Pass the simulated testbench switches
         .we       (accel_we),
         .waddr    (dmem_write_address),
         .wdata    (dmem_write_data),
         .raddr    (dmem_read_address),
         .rdata    (accel_rdata)
     );
-
+    
     // 3. UART Transmitter
     // 3. UART Transmitter
     uart_tx #( .CLKS_PER_BIT(217) ) my_uart (

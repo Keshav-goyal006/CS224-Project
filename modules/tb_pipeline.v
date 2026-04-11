@@ -25,7 +25,7 @@ module tb_pipeline;
     // ADD THIS: Define switches and select a kernel
     reg [3:0] sw;
     initial begin
-        sw = 4'b0001; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
+        sw = 4'b0111; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
     end
 
 
@@ -118,10 +118,24 @@ module tb_pipeline;
     //     .raddr  (dmem_read_address),
     //     .rdata  (accel_rdata)
     // );
-    stream_accel #(.IMG_WIDTH(64)) my_conv (
-        .clk      (clk),
+    // stream_accel #(.IMG_WIDTH(64)) my_conv (
+    //     .clk      (clk),
+    //     .reset    (reset),
+    //     .switches (sw), // Hook up the testbench switches!
+    //     .we       (accel_we),
+    //     .waddr    (dmem_write_address),
+    //     .wdata    (dmem_write_data),
+    //     .raddr    (dmem_read_address),
+    //     .rdata    (accel_rdata)
+    // );
+
+    // =================================================================
+    // 3. HARDWARE ACCELERATOR (5x5 Upgrade!)
+    // =================================================================
+    stream_accel_5x5 #(.IMG_WIDTH(64)) my_conv (
+        .clk      (clk),         // Use the raw testbench clock
         .reset    (reset),
-        .switches (sw), // Hook up the testbench switches!
+        .switches (sw),          // Pass the simulated testbench switches
         .we       (accel_we),
         .waddr    (dmem_write_address),
         .wdata    (dmem_write_data),
@@ -302,7 +316,7 @@ module tb_pipeline;
     always @(posedge clk)
     if (dmem_read_address == 32'h00002028)
         $display("[%0t] Accelerator true pixel: %0d  CPU sees: %0d",
-                 $time, stream_accel.final_pixel, stream_accel.rdata);
+                 $time, stream_accel_5x5.final_pixel, stream_accel_5x5.rdata);
 
 
 endmodule
