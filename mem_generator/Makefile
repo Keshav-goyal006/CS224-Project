@@ -20,50 +20,47 @@ SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
 SRC_VISION       = code_vision.c      # <--- NEW: Added vision source
-SRC_MAIN         = main.c
-IMAGE_HEADER     = image_data.h
-IMAGE_SOURCE     = test_image.png
+# SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
 
 TARGET           = code.elf
-VISION_TARGET    = vision.elf
-.PHONY: all clean vision addition sort negative fibonacci xor main
+.PHONY: all clean vision              # <--- NEW: Added vision to phony
 
 #/// generating .text file of code cross-compiled from highlevel-c code to risc-v code
 # ////////////// Copying and converting the text file into binary files
 #/////// Python script to convert the binary files into the required hex files
 
-addition: crt0.s link.ld $(SRC_ADDITION)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_ADDITION) -o $(TARGET)
-	$(OBJCOPY) -O binary -j .text $(TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata $(TARGET) ./imem_dmem/dmem.bin
+addition: $(SRC_ADDITION)
+	$(CC) -c  $(SRC_ADDITION) -o $(TARGET) $(CFLAGS)
+	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
-sort: crt0.s link.ld $(SRC_SORT)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_SORT) -o $(TARGET)
-	$(OBJCOPY) -O binary -j .text $(TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata $(TARGET) ./imem_dmem/dmem.bin
+sort: $(SRC_SORT)
+	$(CC) -c  $(SRC_SORT) -o $(TARGET) $(CFLAGS)
+	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
-negative: crt0.s link.ld $(SRC_NEGATIVE)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_NEGATIVE) -o $(TARGET)
-	$(OBJCOPY) -O binary -j .text $(TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata $(TARGET) ./imem_dmem/dmem.bin
+negative: $(SRC_NEGATIVE)
+	$(CC) -c  $(SRC_NEGATIVE) -o $(TARGET) $(CFLAGS)
+	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
-fibonacci: crt0.s link.ld $(SRC_FIBONACCI)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_FIBONACCI) -o $(TARGET)
-	$(OBJCOPY) -O binary -j .text $(TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata $(TARGET) ./imem_dmem/dmem.bin
+fibonacci: $(SRC_FIBONACCI)
+	$(CC) -c  $(SRC_FIBONACCI) -o $(TARGET) $(CFLAGS)
+	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
-xor: crt0.s link.ld $(SRC_XOR)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_XOR) -o $(TARGET)
-	$(OBJCOPY) -O binary -j .text $(TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata $(TARGET) ./imem_dmem/dmem.bin
+xor: $(SRC_XOR)
+	$(CC) -c  $(SRC_XOR) -o $(TARGET) $(CFLAGS)
+	$(OBJCOPY) -O binary $(TARGET) ./imem_dmem/imem.bin
+	$(OBJCOPY) -j .data -O binary $(TARGET) ./imem_dmem/dmem.bin
 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
@@ -75,23 +72,18 @@ xor: crt0.s link.ld $(SRC_XOR)
 # 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 # 	cd imem_dmem && python bin2hex.py
 
-vision: crt0.s link.ld $(SRC_VISION)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_VISION) -o $(VISION_TARGET)
-	$(OBJCOPY) -O binary -j .text $(VISION_TARGET) ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata $(VISION_TARGET) ./imem_dmem/dmem.bin
-	$(OBJDUMP) -d $(VISION_TARGET) > ./imem_dmem/code.dis
-	cd imem_dmem && python bin2hex.py
-
-$(IMAGE_HEADER): image_to_c.py $(IMAGE_SOURCE)
-	python image_to_c.py $(IMAGE_SOURCE) $(IMAGE_HEADER)
-
-main: crt0.s link.ld $(SRC_MAIN) $(IMAGE_HEADER)
-	$(CC) $(CFLAGS) $(LDFLAGS) crt0.s $(SRC_MAIN) -o main.elf
-	$(OBJCOPY) -O binary -j .text main.elf ./imem_dmem/imem.bin
-	$(OBJCOPY) -O binary -j .data -j .rodata main.elf ./imem_dmem/dmem.bin
-	$(OBJDUMP) -d main.elf > ./imem_dmem/code.dis
+vision: $(SRC_VISION)
+	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.S $(SRC_VISION) -o vision.elf
+	
+	# Extract exactly the instructions for IMEM
+	$(OBJCOPY) -O binary -j .text -j .text.init vision.elf ./imem_dmem/imem.bin
+	
+	# Extract ALL initialized data for DMEM
+	$(OBJCOPY) -O binary -j .data -j .sdata -j .rodata vision.elf ./imem_dmem/dmem.bin
+	
+	$(OBJDUMP) -d vision.elf > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 
 # /////clean function
 clean:
-	$(RM) $(TARGET) $(VISION_TARGET) $(TARGET:.elf=.map) $(VISION_TARGET:.elf=.map) ./imem_dmem/imem.bin ./imem_dmem/imem.hex ./imem_dmem/dmem.bin ./imem_dmem/dmem.hex ./imem_dmem/code.dis
+	$(RM) $(TARGET) ./imem_dmem/imem.bin ./imem_dmem/imem.hex ./imem_dmem/dmem.bin ./imem_dmem/dmem.hex ./imem_dmem/code.dis

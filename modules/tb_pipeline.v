@@ -375,6 +375,8 @@ module tb_pipeline;
     wire uart_txd; // Dummy wire for simulation
 
     soc_interconnect bus (
+        .clk        (clk),        // <-- ADD THIS
+        .reset      (reset),      // <-- ADD THIS
         .cpu_waddr  (dmem_write_address), 
         .cpu_raddr  (dmem_read_address),  
         .cpu_wdata  (dmem_write_data),
@@ -470,6 +472,17 @@ module tb_pipeline;
         pixel_count = 0;
     end
 
+    // -------------------------------------------------------------------------
+    // UART SPY: WATCH ADDRESS 0x5000 AND PRINT CHARACTERS
+    // -------------------------------------------------------------------------
+    // always @(posedge clk) begin
+    //     if (reset == 1 && dmem_write_ready && dmem_write_address == 32'h00005000) begin
+    //         // %c tells Vivado to print the number as an ASCII letter (e.g., 65 = 'A')
+    //         // $write prints on the same line, instead of adding a newline every letter
+    //         $write("%c", dmem_write_data[7:0]);
+    //     end
+    // end
+
     always @(posedge clk) begin
         // In code_vision.c, the UART TX DATA register is at 0x00005000.
         // Whenever the CPU writes to this address, intercept the pixel!
@@ -486,8 +499,8 @@ module tb_pipeline;
             end
 
             // Once we hit exactly 160x120 pixels, stop the simulation!
-            if (pixel_count == 19200) begin
-                $display("SUCCESS: All 19,200 pixels generated!");
+            if (pixel_count == 3072) begin
+                $display("SUCCESS: All 3072 pixels generated!");
                 $fclose(file_out);
                 $finish;
             end

@@ -1,46 +1,33 @@
-#!/usr/bin/env python3
 from PIL import Image
-import sys
-from pathlib import Path
 
+def convert_image(input_filename, output_filename):
+    # Resize to 64x48 to fit inside a 4KB memory!
+    img = Image.open(input_filename).resize((64, 48)).convert('L')
+    pixels = list(img.getdata())
 
-def main() -> int:
-    if len(sys.argv) not in (3, 4):
-        print(f"Usage: {sys.argv[0]} <input_image> <output_header> [output_coe]")
-        return 1
+    with open(output_filename, 'w') as f:
+        f.write("#include <stdint.h>\n\n")
+        f.write("// 64x48 Grayscale Image (3072 Bytes)\n")
+        f.write(f"const uint8_t image_pixels[{len(pixels)}] = {{\n")
+        
+        # Format it nicely into rows of 64
+        for i in range(0, len(pixels), 64):
+            row = pixels[i:i+64]
+            row_str = ", ".join(str(p) for p in row)
+            f.write(f"    {row_str},\n")
+            
+        f.write("};\n")
+    print(f"Success! Converted {input_filename} to {output_filename}")
 
-    input_path = sys.argv[1]
-    output_header = sys.argv[2]
-    output_coe = sys.argv[3] if len(sys.argv) == 4 else str(Path(output_header).with_name("image.coe"))
+def convert_image_to_txt(input_filename, output_filename):
+    img = Image.open(input_filename).resize((64, 48)).convert('L')
+    pixels = list(img.getdata())
 
-    image = Image.open(input_path).convert("L").resize((10, 10), Image.Resampling.NEAREST)
-    pixels = list(image.getdata())
+    with open(output_filename, 'w') as f:
+        for p in pixels:
+            f.write(f"{p}\n")
+    print(f"Success! Converted {input_filename} to {output_filename}")
 
-    with open(output_header, "w", encoding="utf-8") as output_file:
-        output_file.write("#ifndef IMAGE_DATA_H\n")
-        output_file.write("#define IMAGE_DATA_H\n\n")
-        output_file.write("#include <stdint.h>\n\n")
-        output_file.write("const uint8_t image_data[100] = {\n")
-
-        for row_start in range(0, 100, 10):
-            row = pixels[row_start:row_start + 10]
-            values = ", ".join(str(pixel) for pixel in row)
-            suffix = "," if row_start < 90 else ""
-            output_file.write(f"    {values}{suffix}\n")
-
-        output_file.write("};\n\n")
-        output_file.write("#endif\n")
-
-    with open(output_coe, "w", encoding="utf-8") as coe_file:
-        coe_file.write("memory_initialization_radix=16;\n")
-        coe_file.write("memory_initialization_vector=\n")
-        for i, pixel in enumerate(pixels):
-            value = f"{pixel:02X}"
-            suffix = ";\n" if i == len(pixels) - 1 else ",\n"
-            coe_file.write(value + suffix)
-
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+# Replace 'my_image.jpg' with your picture
+convert_image('image.png', 'image_data.h')
+convert_image_to_txt('image.png', '../sim/original_image.txt')

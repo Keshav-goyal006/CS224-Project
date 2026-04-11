@@ -1,15 +1,15 @@
 `timescale 1ns / 1ps
 
 module top_fpga #(
-    parameter IMEMSIZE = 4096,
-    parameter DMEMSIZE = 4096
+    parameter IMEMSIZE = 65536, // Expanded to 64KB
+    parameter DMEMSIZE = 65536  // Expanded to 64KB
 )(
     input  wire clk,        // fast board clock (100 MHz)
     input  wire reset,      // active-low reset
     input  wire [15:0] sw,
-    output [15:0] led,
+    output wire [15:0] led,
     
-    // --- NEW: VGA PINS ---
+    // --- VGA PINS ---
     output wire [3:0] vga_r,
     output wire [3:0] vga_g,
     output wire [3:0] vga_b,
@@ -18,12 +18,6 @@ module top_fpga #(
 
     output wire uart_txd
 );
-
-    wire [31:0] pc_out_w;   
-    
-    wire exception;
-    wire [15:0] led_internal;
-    assign led = led_internal;
 
     // -----------------------------------------------------------------
     // 100 MHz -> 25 MHz Clock Divider (Required for standard 640x480 VGA)
@@ -38,6 +32,9 @@ module top_fpga #(
     // -----------------------------------------------------------------
     // PIPE ↔ MEMORY WIRES
     // -----------------------------------------------------------------
+    wire [31:0] pc_out_w;   
+    wire exception;
+
     wire [31:0] inst_mem_read_data;
     wire [31:0] inst_mem_address;
 
@@ -65,7 +62,7 @@ module top_fpga #(
         .inst_mem_address    (inst_mem_address),
         
         .dmem_read_valid     (1'b1),
-        .dmem_read_data_temp (cpu_rdata_mux), // Connect to interconnect mux
+        .dmem_read_data_temp (cpu_rdata_mux), // Connect to interconnect mux!
         .dmem_read_ready     (dmem_read_ready),
         .dmem_read_address   (dmem_read_address),
         
@@ -76,40 +73,48 @@ module top_fpga #(
         .dmem_write_byte     (dmem_write_byte)
     );
 
-
     // -----------------------------------------------------------------
     // SOC INTERCONNECT & PERIPHERALS
     // -----------------------------------------------------------------
     wire [31:0] cpu_rdata_mux;
-    wire dmem_we_actual, accel_we, vram_we;
+    wire dmem_we_actual, accel_we, vram_we, uart_we, led_we, sim_trap_we;
     wire [31:0] accel_rdata;
-    wire uart_we;
     wire tx_active;
 
     // 1. The Interconnect (Traffic Cop)
     soc_interconnect bus (
-        .cpu_addr   (dmem_write_address), // CPU's requested address
+        .clk        (clk_25MHz),          // New Clock Port
+        .reset      (reset),              // New Reset Port
+        
+        .cpu_waddr  (dmem_write_address), // Separated Write Address
+        .cpu_raddr  (dmem_read_address),  // Separated Read Address
         .cpu_wdata  (dmem_write_data),
         .cpu_we     (dmem_write_ready), 
         .cpu_re     (dmem_read_ready),
-        .cpu_rdata  (cpu_rdata_mux),      // Sends the correct data back to CPU
+        .cpu_rdata  (cpu_rdata_mux),      
 
-        // Enable signals mapped to specific peripherals
         .dmem_we    (dmem_we_actual),
         .vram_we    (vram_we),
         .accel_we   (accel_we),
-        .led_we     (led_internal), // Hook this up to your LEDs if you want!
+        .led_we     (led_we),
         .uart_we    (uart_we),
-        .sim_trap_we(),
+        .sim_trap_we(sim_trap_we),
 
-        // Data returning from peripherals
         .dmem_rdata (dmem_read_data),
         .vram_rdata (vga_pixel_data), 
         .accel_rdata(accel_rdata),
         .uart_rdata ({31'b0, tx_active})
     );
 
-    // 2. Your Hardware Accelerator
+    // LED Register Logic
+    reg [15:0] led_reg;
+    always @(posedge clk_25MHz or negedge reset) begin
+        if (!reset) led_reg <= 16'b0;
+        else if (led_we) led_reg <= dmem_write_data[15:0];
+    end
+    assign led = led_reg;
+
+    // 2. Hardware Accelerator
     conv_accelerator my_conv (
         .clk    (clk_25MHz),
         .reset  (reset),
@@ -120,39 +125,52 @@ module top_fpga #(
         .rdata  (accel_rdata)
     );
 
-    uart_tx my_uart (
-        .clk        (clk_25MHz), // Using 25MHz clock
+    // 3. UART Transmitter
+    // 3. UART Transmitter
+    uart_tx #( .CLKS_PER_BIT(217) ) my_uart (
+        .clk        (clk_25MHz), 
         .reset      (reset),
-        .tx_start   (uart_we && (dmem_write_address == 32'h00005000)),
+        .tx_start   (uart_we), 
         .tx_data    (dmem_write_data[7:0]),
         .tx_active  (tx_active),
         .tx_serial  (uart_txd) 
     );
 
-    instr_mem IMEM (.clk(clk_25MHz), .pc(inst_mem_address), .instr(inst_mem_read_data));
-    // data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_write_ready), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
-    data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_we_actual), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
+    // 4. Base Memory
+    instr_mem IMEM (
+        .clk(clk_25MHz), 
+        .pc(inst_mem_address), 
+        .instr(inst_mem_read_data)
+    );
+    
+    data_mem DMEM (
+        .clk(clk_25MHz), 
+        .re(dmem_read_ready), 
+        .raddr(dmem_read_address), 
+        .rdata(dmem_read_data), 
+        .we(dmem_we_actual), // Protected by Interconnect
+        .waddr(dmem_write_address), 
+        .wdata(dmem_write_data), 
+        .wstrb(dmem_write_byte)
+    );
+
     // -----------------------------------------------------------------
     // VRAM AND VGA INTEGRATION
     // -----------------------------------------------------------------
-    // CPU framebuffer writes are mapped to 0x5000-0x9B00.
-    wire is_vram_write = dmem_write_ready &&
-                         (dmem_write_address >= 32'h00005000) &&
-                         (dmem_write_address <  32'h00009B00);
-
-    wire [14:0] vram_write_addr = dmem_write_address - 32'h00005000;
-    
     wire [9:0] vga_x;
     wire [9:0] vga_y;
     wire video_on;
     wire [7:0] vga_pixel_data;
 
+    // Convert the massive 32-bit CPU address down to a 0-19199 array index for the VRAM module
+    wire [14:0] vram_write_addr = dmem_write_address - 32'h00030000;
+    
     // Instantiate Dual-Port VRAM
     dual_port_vram VRAM (
-        .clk(clk_25MHz),
+        .clk    (clk_25MHz),
         
         // Port A: CPU Write
-        .we_a   (is_vram_write),
+        .we_a   (vram_we), // Now strictly controlled by the Interconnect!
         .addr_a (vram_write_addr),
         .din_a  (dmem_write_data[7:0]),
         

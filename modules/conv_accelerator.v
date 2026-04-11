@@ -45,13 +45,29 @@ module conv_accelerator (
         (pixels[6] * weights[6]) + (pixels[7] * weights[7]) + (pixels[8] * weights[8]);
 
     // Read Logic
-    always @(*) begin
-        // Read Result from 0x2080 (Index 32)
-        if (r_idx == 32) begin
-            rdata = mac_result;
+    always @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            rdata <= 32'b0;
         end else begin
-            rdata = 32'd0;
+            // 0x00002080 is the RESULT address. 
+            // Depending on how you wired raddr, check the lower bits!
+            // (If raddr is the raw byte address, check for 8'h80)
+            if (raddr[7:0] == 8'h80) begin 
+                // Latch the math result onto the bus securely!
+                rdata <= mac_result;
+            end else begin
+                // Default to 0 to prevent bus latching
+                rdata <= 32'b0; 
+            end
         end
     end
+    // always @(*) begin
+    //     // Read Result from 0x2080 (Index 32)
+    //     if (r_idx == 32) begin
+    //         rdata = mac_result;
+    //     end else begin
+    //         rdata = 32'd0;
+    //     end
+    // end
 
 endmodule
