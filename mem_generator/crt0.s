@@ -1,23 +1,14 @@
-.section .text.init,"ax",@progbits
-.globl _start
-.type _start, @function
+/* crt0.S */
+.section .text.init
+.global _start
 
 _start:
-    la sp, _stack_top
-    la gp, __global_pointer$
-
-    la t0, _sbss
-    la t1, _ebss
-1:
-    bgeu t0, t1, 2f
-    sw zero, 0(t0)
-    addi t0, t0, 4
-    j 1b
-
-2:
+    /* Set stack pointer to the top of DMEM (0x1000 + 4096 = 0x2000) */
+    li sp, 0x2000
+    
+    /* Jump to the main() function in code_vision.c */
     call main
 
-3:
-    j 3b
-
-.size _start, . - _start
+    /* If main returns, trap the CPU in an infinite loop */
+end_loop:
+    j end_loop

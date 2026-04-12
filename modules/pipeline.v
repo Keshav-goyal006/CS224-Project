@@ -21,7 +21,6 @@
 	input       	[31: 0] dmem_read_data_temp,
 	input               	dmem_write_valid,
 	input               	dmem_read_valid,
-    input        	[15:0] switch_in,
 	
 	output       [31: 0]  inst_mem_address,
     output                dmem_read_ready,
@@ -84,13 +83,7 @@
     
 	wire 	wb_stall_first;
 	wire 	wb_stall_second;
-	wire	wb_stall;
-
-    localparam [31:0] MMIO_CONV_BASE  = 32'h00002000;
-    localparam [31:0] MMIO_CONV_LIMIT = 32'h00002100;
-    localparam [31:0] MMIO_SWITCH_ADDR = 32'h00003100;
-    localparam [31:0] MMIO_LED_ADDR   = 32'h00003000;
-    localparam [31:0] MMIO_TRAP_ADDR  = 32'h00004000;
+	wire	wb_stall;   	 
         	 
        	 
 	//Execute Stage
@@ -349,8 +342,8 @@ end
 
 
 wire [31:0] coproc_read_data;
-wire is_coproc_waddr = (dmem_write_address >= MMIO_CONV_BASE) && (dmem_write_address < MMIO_CONV_LIMIT);
-wire is_coproc_raddr = (dmem_read_address == 32'h00002080);
+wire is_coproc_waddr = (dmem_write_address[31:12] == 20'h00002);
+wire is_coproc_raddr = (dmem_read_address[31:12]  == 20'h00002);
 
 conv_accelerator my_conv (
     .clk(clk),
@@ -382,8 +375,7 @@ always @(posedge clk or negedge reset) begin
 end
 
 // Multiplex the delayed data back to the CPU
-wire [31:0] final_read_data = is_coproc_raddr_reg ? coproc_read_data_reg :
-                              (dmem_read_address == MMIO_SWITCH_ADDR ? {16'h0000, switch_in} : dmem_read_data_temp);
+wire [31:0] final_read_data = is_coproc_raddr_reg ? coproc_read_data_reg : dmem_read_data_temp;
 
 // -------------------------------------------------------------------------
 // LED Memory Mapped Register (Mapped to 0x3000)
@@ -392,7 +384,7 @@ reg [15:0] led_reg;
 always @(posedge clk or negedge reset) begin
     if (!reset) begin
         led_reg <= 16'b0;
-    end else if (dmem_write_ready && dmem_write_address == MMIO_LED_ADDR) begin
+    end else if (dmem_write_ready && dmem_write_address == 32'h00003000) begin
         led_reg <= dmem_write_data[15:0];
     end
 end
@@ -474,7 +466,7 @@ end
 
 // Listen for the CPU writing to our magic address
 always @(posedge clk) begin
-    if (dmem_write_ready && dmem_write_address == MMIO_TRAP_ADDR) begin
+    if (dmem_write_ready && dmem_write_address == 32'h00004000) begin
         // Write the pixel value to the text file
         $fdisplay(file_out, "%d", $signed(dmem_write_data));
     end
