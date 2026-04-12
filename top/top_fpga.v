@@ -138,7 +138,7 @@ module top_fpga #(
     // );
 
     stream_accel_5x5 #(.IMG_WIDTH(64)) my_conv (
-        .clk      (clk),         // Use the raw testbench clock
+        .clk      (clk_25MHz),         // Use the raw testbench clock
         .reset    (reset),
         .switches (sw),          // Pass the simulated testbench switches
         .we       (accel_we),
