@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="2300" viewBox="0 0 2200 2300">
+  <defs>
+    <style>
+      .bg { fill: #f6f8fb; }
+      .title { font: 700 34px Arial, sans-serif; fill: #172033; }
+      .sub { font: 17px Arial, sans-serif; fill: #4d596b; }
+      .section { font: 700 22px Arial, sans-serif; fill: #172033; }
+      .box { fill: #ffffff; stroke: #2c5b8f; stroke-width: 2.2; rx: 8; }
+      .logic { fill: #fffdf5; stroke: #9b6a05; stroke-width: 2.2; rx: 8; }
+      .mem { fill: #f4fff7; stroke: #25804a; stroke-width: 2.2; rx: 8; }
+      .io { fill: #fff6f6; stroke: #b33d3d; stroke-width: 2.2; rx: 8; }
+      .port { fill: #edf3ff; stroke: #6b84aa; stroke-width: 1.8; rx: 8; }
+      .muted { fill: #f1f1f1; stroke: #888; stroke-width: 1.8; rx: 8; stroke-dasharray: 7 5; }
+      .label { font: 700 17px Arial, sans-serif; fill: #172033; }
+      .text { font: 14px Consolas, monospace; fill: #172033; }
+      .tiny { font: 12px Consolas, monospace; fill: #172033; }
+      .wire { stroke: #24527f; stroke-width: 2.5; fill: none; marker-end: url(#blue); }
+      .write { stroke: #a64f00; stroke-width: 2.6; fill: none; marker-end: url(#gold); }
+      .read { stroke: #27764b; stroke-width: 2.6; fill: none; marker-end: url(#green); }
+      .ctrl { stroke: #a53434; stroke-width: 2.4; fill: none; marker-end: url(#red); }
+      .clk { stroke: #5d4aa0; stroke-width: 2.2; fill: none; marker-end: url(#purple); stroke-dasharray: 8 5; }
+      .buslabel { font: 13px Consolas, monospace; fill: #172033; }
+    </style>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24527f"/></marker>
+    <marker id="gold" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#a64f00"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#27764b"/></marker>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#a53434"/></marker>
+    <marker id="purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#5d4aa0"/></marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2200" height="2300"/>
+  <text class="title" x="50" y="58">top_fpga.v Hardware Block Diagram</text>
+  <text class="sub" x="50" y="90">Revised view: no source listing, more explicit hardware, wires, muxing, decoders, address transforms, and I/O datapaths.</text>
+
+  <text class="section" x="50" y="135">External Interface</text>
+  <rect class="port" x="50" y="160" width="385" height="150"/>
+  <text class="label" x="70" y="190">Inputs</text>
+  <text class="text" x="70" y="220">clk: 100 MHz board clock</text>
+  <text class="text" x="70" y="248">reset: active-low reset</text>
+  <text class="text" x="70" y="276">sw[15:0]: accelerator switches</text>
+  <rect class="port" x="1740" y="160" width="410" height="185"/>
+  <text class="label" x="1760" y="190">Outputs</text>
+  <text class="text" x="1760" y="220">led[15:0], uart_txd</text>
+  <text class="text" x="1760" y="248">vga_hs, vga_vs</text>
+  <text class="text" x="1760" y="276">vga_r[3:0], vga_g[3:0], vga_b[3:0]</text>
+
+  <rect class="logic" x="80" y="410" width="360" height="175"/>
+  <text class="label" x="100" y="442">Clock Divider</text>
+  <text class="text" x="100" y="474">clk_div[1:0] register</text>
+  <text class="text" x="100" y="502">posedge clk / negedge reset</text>
+  <text class="text" x="100" y="530">reset -> 2'b00, else +1</text>
+  <text class="text" x="100" y="558">clk_25MHz = clk_div[1]</text>
+
+  <rect class="box" x="650" y="380" width="520" height="235"/>
+  <text class="label" x="670" y="412">Pipeline CPU: pipe_u</text>
+  <text class="text" x="670" y="444">clk=clk_25MHz, reset=reset, stall=1'b0</text>
+  <text class="text" x="670" y="472">pc_out_w, exception</text>
+  <text class="text" x="670" y="500">inst_mem_address -> instruction fetch</text>
+  <text class="text" x="670" y="528">dmem_read_address / dmem_read_ready</text>
+  <text class="text" x="670" y="556">dmem_write_address / data / byte / ready</text>
+  <text class="text" x="670" y="584">dmem_read_data_temp = cpu_rdata_mux</text>
+  <path class="clk" d="M440 500 C520 500 570 500 650 500"/>
+  <text class="buslabel" x="505" y="482">clk_25MHz</text>
+  <path class="ctrl" d="M245 310 L245 410"/>
+  <text class="buslabel" x="260" y="365">reset</text>
+
+  <rect class="mem" x="80" y="680" width="410" height="165"/>
+  <text class="label" x="100" y="712">Instruction Memory: IMEM</text>
+  <text class="text" x="100" y="744">clk=clk_25MHz</text>
+  <text class="text" x="100" y="772">pc=inst_mem_address[31:0]</text>
+  <text class="text" x="100" y="800">instr=inst_mem_read_data[31:0]</text>
+  <path class="read" d="M650 470 C575 555 535 650 490 760"/>
+  <text class="buslabel" x="505" y="635">inst_mem_address[31:0]</text>
+  <path class="read" d="M490 800 C570 840 615 760 650 540"/>
+  <text class="buslabel" x="505" y="860">inst_mem_read_data[31:0]</text>
+
+  <rect class="logic" x="650" y="700" width="580" height="470"/>
+  <text class="label" x="670" y="732">Memory-Mapped SoC Interconnect</text>
+  <text class="text" x="670" y="764">CPU inputs: waddr, raddr, wdata, we, re</text>
+  <text class="text" x="670" y="792">Peripheral read inputs: DMEM, VRAM, ACCEL, UART status</text>
+  <rect class="box" x="695" y="835" width="210" height="125"/>
+  <text class="label" x="720" y="868">Address Decoder</text>
+  <text class="tiny" x="720" y="898">uses cpu_waddr</text>
+  <text class="tiny" x="720" y="923">uses cpu_raddr</text>
+  <text class="tiny" x="720" y="948">selects memory map</text>
+  <rect class="box" x="970" y="835" width="220" height="125"/>
+  <text class="label" x="995" y="868">Write Enable Fanout</text>
+  <text class="tiny" x="995" y="898">dmem_we_actual, vram_we</text>
+  <text class="tiny" x="995" y="923">accel_we, led_we</text>
+  <text class="tiny" x="995" y="948">uart_we, sim_trap_we</text>
+  <polygon points="800,1015 1035,1015 1110,1080 1035,1145 800,1145 870,1080" fill="#ffffff" stroke="#2c5b8f" stroke-width="2.2"/>
+  <text class="label" x="902" y="1065">Read Data Mux</text>
+  <text class="tiny" x="860" y="1097">cpu_rdata_mux[31:0]</text>
+  <path class="wire" d="M905 898 L970 898"/>
+  <text class="buslabel" x="910" y="882">decode select</text>
+  <path class="wire" d="M910 615 L910 700"/>
+  <text class="buslabel" x="925" y="662">CPU dmem bus</text>
+  <path class="wire" d="M800 1080 C720 1030 675 950 650 830"/>
+  <text class="buslabel" x="680" y="1045">cpu_rdata_mux -> CPU</text>
+
+  <rect class="mem" x="80" y="1010" width="445" height="250"/>
+  <text class="label" x="100" y="1042">Data Memory: DMEM</text>
+  <text class="text" x="100" y="1074">re=dmem_read_ready</text>
+  <text class="text" x="100" y="1102">raddr=dmem_read_address[31:0]</text>
+  <text class="text" x="100" y="1130">rdata=dmem_read_data[31:0]</text>
+  <text class="text" x="100" y="1158">we=dmem_we_actual</text>
+  <text class="text" x="100" y="1186">waddr=dmem_write_address[31:0]</text>
+  <text class="text" x="100" y="1214">wdata=dmem_write_data[31:0], wstrb=dmem_write_byte[3:0]</text>
+  <path class="write" d="M970 930 C790 1010 660 1080 525 1145"/>
+  <text class="buslabel" x="570" y="1040">dmem_we_actual + addr/data/byte</text>
+  <path class="read" d="M525 1130 C645 1130 750 1100 870 1080"/>
+  <text class="buslabel" x="555" y="1165">dmem_read_data -> mux</text>
+
+  <rect class="box" x="1380" y="700" width="525" height="235"/>
+  <text class="label" x="1400" y="732">Accelerator: stream_accel_5x5</text>
+  <text class="text" x="1400" y="764">IMG_WIDTH=64</text>
+  <text class="text" x="1400" y="792">switches=sw[15:0]</text>
+  <text class="text" x="1400" y="820">we=accel_we</text>
+  <text class="text" x="1400" y="848">waddr/wdata from CPU write bus</text>
+  <text class="text" x="1400" y="876">raddr from CPU read bus</text>
+  <text class="text" x="1400" y="904">rdata=accel_rdata[31:0]</text>
+  <path class="write" d="M1190 915 C1255 855 1315 820 1380 820"/>
+  <text class="buslabel" x="1235" y="845">accel_we + addr/data</text>
+  <path class="read" d="M1380 904 C1270 985 1190 1035 1110 1080"/>
+  <text class="buslabel" x="1195" y="1008">accel_rdata -> mux</text>
+  <path class="wire" d="M435 276 C780 250 1130 345 1380 792"/>
+  <text class="buslabel" x="1000" y="325">sw[15:0]</text>
+
+  <rect class="io" x="1380" y="990" width="525" height="195"/>
+  <text class="label" x="1400" y="1022">UART TX</text>
+  <text class="text" x="1400" y="1054">CLKS_PER_BIT=217</text>
+  <text class="text" x="1400" y="1082">tx_start=uart_we</text>
+  <text class="text" x="1400" y="1110">tx_data=dmem_write_data[7:0]</text>
+  <text class="text" x="1400" y="1138">tx_active -> {31'b0, tx_active} -> mux</text>
+  <text class="text" x="1400" y="1166">tx_serial -> uart_txd</text>
+  <path class="write" d="M1190 950 C1280 1010 1325 1065 1380 1110"/>
+  <text class="buslabel" x="1230" y="1055">uart_we + byte data</text>
+  <path class="read" d="M1380 1138 C1270 1165 1185 1135 1110 1080"/>
+  <text class="buslabel" x="1200" y="1188">UART status -> mux</text>
+  <path class="ctrl" d="M1905 1166 L2070 1166"/>
+  <text class="buslabel" x="1930" y="1148">uart_txd</text>
+
+  <rect class="io" x="1380" y="1245" width="525" height="175"/>
+  <text class="label" x="1400" y="1277">LED Register</text>
+  <text class="text" x="1400" y="1309">led_reg[15:0]</text>
+  <text class="text" x="1400" y="1337">reset -> 16'b0</text>
+  <text class="text" x="1400" y="1365">led_we -> dmem_write_data[15:0]</text>
+  <text class="text" x="1400" y="1393">led = led_reg</text>
+  <path class="write" d="M1190 955 C1295 1115 1335 1295 1380 1365"/>
+  <text class="buslabel" x="1235" y="1290">led_we + low 16 write bits</text>
+  <path class="ctrl" d="M1905 1393 L2070 1393"/>
+  <text class="buslabel" x="1930" y="1375">led[15:0]</text>
+
+  <rect class="logic" x="80" y="1470" width="445" height="155"/>
+  <text class="label" x="100" y="1502">VRAM Write Address Math</text>
+  <text class="text" x="100" y="1534">vram_write_addr[14:0]</text>
+  <text class="text" x="100" y="1562">= dmem_write_address - 32'h00030000</text>
+  <text class="text" x="100" y="1590">maps CPU address to 0..19199 VRAM index</text>
+  <path class="write" d="M970 950 C760 1110 625 1320 525 1550"/>
+  <text class="buslabel" x="560" y="1395">dmem_write_address</text>
+
+  <rect class="mem" x="650" y="1460" width="560" height="275"/>
+  <text class="label" x="670" y="1492">Dual-Port VRAM</text>
+  <text class="text" x="670" y="1524">Port A CPU write: we_a=vram_we</text>
+  <text class="text" x="670" y="1552">addr_a=vram_write_addr[14:0]</text>
+  <text class="text" x="670" y="1580">din_a=dmem_write_data[7:0]</text>
+  <text class="text" x="670" y="1622">Port B VGA read address:</text>
+  <text class="text" x="690" y="1650">((vga_y >> 2) * 160) + (vga_x >> 2)</text>
+  <text class="text" x="670" y="1688">dout_b=vga_pixel_data[7:0]</text>
+  <path class="write" d="M525 1552 C575 1552 610 1552 650 1552"/>
+  <text class="buslabel" x="545" y="1535">vram_write_addr</text>
+  <path class="write" d="M1190 935 C1270 1110 1290 1325 1210 1524"/>
+  <text class="buslabel" x="1225" y="1430">vram_we + dmem_write_data[7:0]</text>
+
+  <rect class="logic" x="1380" y="1510" width="525" height="175"/>
+  <text class="label" x="1400" y="1542">VGA Read Address Generator</text>
+  <text class="text" x="1400" y="1574">x_div4 = vga_x >> 2</text>
+  <text class="text" x="1400" y="1602">y_div4 = vga_y >> 2</text>
+  <text class="text" x="1400" y="1630">addr_b = y_div4 * 160 + x_div4</text>
+  <text class="text" x="1400" y="1658">feeds VRAM Port B</text>
+  <path class="wire" d="M1380 1630 C1315 1665 1270 1665 1210 1650"/>
+  <text class="buslabel" x="1235" y="1715">computed VRAM read address</text>
+
+  <rect class="box" x="1380" y="1745" width="525" height="205"/>
+  <text class="label" x="1400" y="1777">VGA Timing Controller</text>
+  <text class="text" x="1400" y="1809">clk_25MHz, reset</text>
+  <text class="text" x="1400" y="1837">x=vga_x[9:0], y=vga_y[9:0]</text>
+  <text class="text" x="1400" y="1865">video_on</text>
+  <text class="text" x="1400" y="1893">hsync=vga_hs, vsync=vga_vs</text>
+  <path class="wire" d="M1640 1745 L1640 1685"/>
+  <text class="buslabel" x="1655" y="1725">vga_x, vga_y</text>
+  <path class="ctrl" d="M1905 1893 L2070 1893"/>
+  <text class="buslabel" x="1930" y="1875">vga_hs/vga_vs</text>
+
+  <polygon points="1430,2010 1720,2010 1805,2090 1720,2170 1430,2170 1515,2090" fill="#ffffff" stroke="#b33d3d" stroke-width="2.2"/>
+  <text class="label" x="1548" y="2063">RGB Gate / Mapper</text>
+  <text class="text" x="1495" y="2095">video_on ? vga_pixel_data[7:4] : 4'h0</text>
+  <text class="text" x="1520" y="2123">drives vga_r/g/b[3:0]</text>
+  <path class="read" d="M1210 1688 C1320 1800 1400 1935 1515 2090"/>
+  <text class="buslabel" x="1260" y="1910">vga_pixel_data[7:0]</text>
+  <path class="ctrl" d="M1640 1950 L1640 2010"/>
+  <text class="buslabel" x="1655" y="1988">video_on</text>
+  <path class="ctrl" d="M1805 2090 L2070 2090"/>
+  <text class="buslabel" x="1830" y="2072">vga_r/g/b</text>
+
+  <rect class="muted" x="80" y="1780" width="525" height="185"/>
+  <text class="label" x="100" y="1812">Commented Hardware Alternatives</text>
+  <text class="text" x="100" y="1844">conv_accelerator my_conv: not instantiated</text>
+  <text class="text" x="100" y="1872">stream_accel #(.IMG_WIDTH(64)): not instantiated</text>
+  <text class="text" x="100" y="1900">current active accelerator is stream_accel_5x5</text>
+  <text class="text" x="100" y="1928">commented version used sw[3:0]; active version uses sw[15:0]</text>
+
+  <rect class="box" x="80" y="2025" width="1035" height="205"/>
+  <text class="label" x="100" y="2057">Legend</text>
+  <text class="text" x="100" y="2089">Blue: general address/control buses and computed-address relationships</text>
+  <text class="text" x="100" y="2117">Gold: CPU write path and decoded write-enable fanout</text>
+  <text class="text" x="100" y="2145">Green: read-return paths into the CPU mux or VGA pixel stream</text>
+  <text class="text" x="100" y="2173">Red: physical outputs and output gates</text>
+  <text class="text" x="100" y="2201">Purple dashed: clk_25MHz clock distribution</text>
+</svg>
