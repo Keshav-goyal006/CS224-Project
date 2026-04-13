@@ -1,4 +1,4 @@
-#define N 3
+#define N 5
 
 // Define the hardware memory addresses based on our Verilog design
 volatile int* const MAC_REG_A = (int*)0x00002000;
@@ -6,8 +6,8 @@ volatile int* const MAC_REG_B = (int*)0x00002004; // Writing here triggers the M
 volatile int* const MAC_ACC   = (int*)0x00002008; // Read the result from here
 volatile int* const MAC_CLEAR = (int*)0x0000200C; // Write anything here to reset to 0
 
-int A[N][N] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
-int B[N][N] = {{9, 8, 7}, {6, 5, 4}, {3, 2, 1}};
+int A[N][N] = {{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}, {16, 17, 18, 19, 20}, {21, 22, 23, 24, 25}};
+int B[N][N] = {{25, 24, 23, 22, 21}, {20, 19, 18, 17, 16}, {15, 14, 13, 12, 11}, {10, 9, 8, 7, 6}, {5, 4, 3, 2, 1}};
 int C[N][N] = {0};
 
 int main() {
