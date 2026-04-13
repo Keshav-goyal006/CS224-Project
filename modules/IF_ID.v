@@ -292,7 +292,7 @@ always @(posedge clk or negedge reset_n) begin
         lui_o               <= lui_i;
         jal_o               <= jal_i;
         jalr_o              <= jalr_i;
-        branch_o            <= branch_i;// TODO: Store the corresponding signal in a flip flop;
+        branch_o            <= branch_i;
         mem_write_o         <= mem_write_i;// TODO: Store the corresponding signal in a flip flop;
         mem_to_reg_o        <= mem_to_reg_i;
         arithsubtype_o      <= arithsubtype_i;
