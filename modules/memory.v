@@ -25,9 +25,8 @@ endmodule
 
 
 
-//====================================
 // Data Memory (DMEM) - FPGA-safe
-//====================================
+
 module data_mem (
 	input     	clk,
 

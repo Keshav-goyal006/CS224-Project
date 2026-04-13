@@ -11,7 +11,7 @@ READELF = riscv-none-elf-readelf
 CC_FOR_VISION = riscv-none-elf-gcc
 #///// flags for RV32i architecture///////////////////
 CFLAGS  = -march=rv32im -mabi=ilp32
-CFLAGS_FOR_VISION =-march=rv32i -mabi=ilp32 -ffreestanding -nostdlib -O0
+CFLAGS_FOR_VISION =-march=rv32im -mabi=ilp32 -ffreestanding -nostdlib -O0
 
 #////Source for c code file ///////////////////////////
 SRC_ADDITION     = code_addition.c

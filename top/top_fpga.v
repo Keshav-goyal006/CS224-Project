@@ -76,8 +76,19 @@ module top_fpga #(
     );
 
     instr_mem IMEM (.clk(clk_25MHz), .pc(inst_mem_address), .instr(inst_mem_read_data));
-    data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_write_ready), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
+    // data_mem  DMEM (.clk(clk_25MHz), .re(dmem_read_ready), .raddr(dmem_read_address), .rdata(dmem_read_data), .we(dmem_write_ready), .waddr(dmem_write_address), .wdata(dmem_write_data), .wstrb(dmem_write_byte));
 
+    data_mem  DMEM (
+        .clk(clk_25MHz), 
+        // PROTECT DMEM: Only read/write if the address is in the 0x0000XXXX range
+        .re(dmem_read_ready && (dmem_read_address[31:16] == 16'h0000)), 
+        .raddr(dmem_read_address), 
+        .rdata(dmem_read_data), 
+        .we(dmem_write_ready && (dmem_write_address[31:16] == 16'h0000)), 
+        .waddr(dmem_write_address), 
+        .wdata(dmem_write_data), 
+        .wstrb(dmem_write_byte)
+    );
     // -----------------------------------------------------------------
     // VRAM AND VGA INTEGRATION
     // -----------------------------------------------------------------
