@@ -1,7 +1,7 @@
 #//////////////////////////////////////////////////////
 #/////////////////INCLUDING CROSS-COMPILER/////////////
 
-TOOLCHAIN_PREFIX ?= riscv32-unknown-elf
+TOOLCHAIN_PREFIX ?= riscv32-none-elf
 
 CC      = $(TOOLCHAIN_PREFIX)-gcc
 OBJDUMP = $(TOOLCHAIN_PREFIX)-objdump
@@ -9,7 +9,7 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)-objcopy
 READELF = $(TOOLCHAIN_PREFIX)-readelf
 
 #///// flags for RV32I bare-metal ///////////////////
-CFLAGS  = -march=rv32i -mabi=ilp32 -Os -ffreestanding -nostdlib -fno-builtin
+CFLAGS  = -march=rv32im -mabi=ilp32 -Os -ffreestanding -nostdlib -fno-builtin
 LDFLAGS = -T link.ld -Wl,-Map=$(@:.elf=.map)
 
 #////Source for c code file ///////////////////////////
