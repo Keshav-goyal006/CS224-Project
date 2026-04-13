@@ -45,7 +45,7 @@ module vga_controller (
         end
     end
 
-    // Sync Signals (Active Low for 640x480)
+   
     always @(posedge clk_25MHz or negedge reset) begin
         if (!reset) begin
             hsync <= 1'b1;
