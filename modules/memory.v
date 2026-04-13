@@ -5,7 +5,7 @@ module instr_mem (
 );
 
 	// 1024 words = 4 KB
-	Declare instruction memory array (word-addressable, 4 KB total)
+	// Declare instruction memory array (word-addressable, 4 KB total)
 	(* ram_style = "block" *)
 	reg [31:0] imem [0:1023];
 
