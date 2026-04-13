@@ -1,8 +1,8 @@
 #include <stdint.h>
 
 volatile int32_t* const ACCEL_WEIGHTS = (int32_t*)0x00002000;
-volatile int32_t* const ACCEL_PIXELS  = (int32_t*)0x00002040;
-volatile int32_t* const ACCEL_RESULT  = (int32_t*)0x00002080;
+volatile int32_t* const ACCEL_PIXELS  = (int32_t*)0x00002080;
+volatile int32_t* const ACCEL_RESULT  = (int32_t*)0x000020F0;
 volatile int32_t* const SIM_OUT_TRAP  = (int32_t*)0x00004000;
 
 int32_t edge_kernel[9] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};

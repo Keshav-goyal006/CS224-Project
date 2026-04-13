@@ -350,9 +350,10 @@ end
 
 wire [31:0] coproc_read_data;
 wire is_coproc_waddr = (dmem_write_address >= MMIO_CONV_BASE) && (dmem_write_address < MMIO_CONV_LIMIT);
-wire is_coproc_raddr = (dmem_read_address == 32'h00002080);
+wire is_coproc_raddr = (dmem_read_address == 32'h00002008) ||
+                       (dmem_read_address == 32'h000020F0);
 
-conv_accelerator my_conv (
+mac_accelerator my_mac (
     .clk(clk),
     .reset(reset),
     .we(dmem_write_ready && is_coproc_waddr),

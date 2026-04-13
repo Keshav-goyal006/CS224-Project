@@ -1,8 +1,8 @@
 // Coprocessor Memory Map
 #define CONV_BASE_ADDR 0x00002000
 volatile int* HW_WEIGHTS = (volatile int*)(CONV_BASE_ADDR + 0x00);
-volatile int* HW_PIXELS  = (volatile int*)(CONV_BASE_ADDR + 0x40);
-volatile int* HW_RESULT  = (volatile int*)(CONV_BASE_ADDR + 0x80);
+volatile int* HW_PIXELS  = (volatile int*)(CONV_BASE_ADDR + 0x80);
+volatile int* HW_RESULT  = (volatile int*)(CONV_BASE_ADDR + 0xF0);
 
 // Memory-Mapped LEDs (Address 0x3000)
 volatile int* FPGA_LEDS  = (volatile int*)0x00003000;

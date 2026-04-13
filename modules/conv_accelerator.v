@@ -12,43 +12,61 @@ module conv_accelerator (
     output reg [31:0] rdata
 );
 
-    reg signed [31:0] weights [0:8];
-    reg signed [31:0] pixels  [0:8];
+    reg signed [31:0] weights [0:24];
+    reg signed [31:0] pixels  [0:24];
     
     wire [5:0] w_idx = waddr[7:2];
     wire [5:0] r_idx = raddr[7:2];
     
     integer i;
+    integer j;
+    reg signed [63:0] mac_sum;
+
+    localparam [5:0] W_BASE_IDX  = 6'd0;   // 0x2000 .. 0x2060
+    localparam [5:0] W_LAST_IDX  = 6'd24;
+    localparam [5:0] P_BASE_IDX  = 6'd32;  // 0x2080 .. 0x20E0
+    localparam [5:0] P_LAST_IDX  = 6'd56;
+    localparam [5:0] RES_IDX     = 6'd60;  // 0x20F0
+    localparam [5:0] CLEAR_IDX   = 6'd61;  // 0x20F4
 
     // Write Logic
     always @(posedge clk or negedge reset) begin
         if (!reset) begin
-            for (i = 0; i < 9; i = i + 1) begin
+            for (i = 0; i < 25; i = i + 1) begin
                 weights[i] <= 32'd0;
                 pixels[i]  <= 32'd0;
             end
-        end 
+        end
         else if (we) begin
-            if (w_idx >= 0 && w_idx <= 8) begin
-                weights[w_idx] <= wdata;
-            end
-            else if (w_idx >= 16 && w_idx <= 24) begin
-                pixels[w_idx - 16] <= wdata;
+            if (w_idx >= W_BASE_IDX && w_idx <= W_LAST_IDX) begin
+                weights[w_idx - W_BASE_IDX] <= wdata;
+            end else if (w_idx >= P_BASE_IDX && w_idx <= P_LAST_IDX) begin
+                pixels[w_idx - P_BASE_IDX] <= wdata;
+            end else if (w_idx == CLEAR_IDX) begin
+                for (i = 0; i < 25; i = i + 1) begin
+                    weights[i] <= 32'd0;
+                    pixels[i]  <= 32'd0;
+                end
             end
         end
     end
 
-    // Combinational 3x3 MAC
-    wire signed [31:0] mac_result = 
-        (pixels[0] * weights[0]) + (pixels[1] * weights[1]) + (pixels[2] * weights[2]) +
-        (pixels[3] * weights[3]) + (pixels[4] * weights[4]) + (pixels[5] * weights[5]) +
-        (pixels[6] * weights[6]) + (pixels[7] * weights[7]) + (pixels[8] * weights[8]);
+    // Combinational 5x5 MAC
+    always @(*) begin
+        mac_sum = 64'sd0;
+        for (j = 0; j < 25; j = j + 1) begin
+            mac_sum = mac_sum + ($signed(weights[j]) * $signed(pixels[j]));
+        end
+    end
 
     // Read Logic
     always @(*) begin
-        // Read Result from 0x2080 (Index 32)
-        if (r_idx == 32) begin
-            rdata = mac_result;
+        if (r_idx >= W_BASE_IDX && r_idx <= W_LAST_IDX) begin
+            rdata = weights[r_idx - W_BASE_IDX];
+        end else if (r_idx >= P_BASE_IDX && r_idx <= P_LAST_IDX) begin
+            rdata = pixels[r_idx - P_BASE_IDX];
+        end else if (r_idx == RES_IDX) begin
+            rdata = mac_sum[31:0];
         end else begin
             rdata = 32'd0;
         end
