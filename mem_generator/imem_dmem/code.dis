@@ -4,128 +4,128 @@ vision.elf:     file format elf32-littleriscv
 
 Disassembly of section .text:
 
-00000000 <_start>:
-   0:	00002137          	lui	sp,0x2
-   4:	008000ef          	jal	c <main>
+00000048 <_start>:
+  48:	00002137          	lui	sp,0x2
+  4c:	008000ef          	jal	54 <main>
 
-00000008 <end_loop>:
-   8:	0000006f          	j	8 <end_loop>
+00000050 <end_loop>:
+  50:	0000006f          	j	50 <end_loop>
 
-0000000c <main>:
-   c:	fd010113          	addi	sp,sp,-48 # 1fd0 <UART_TX_STAT+0x3c4>
-  10:	02112623          	sw	ra,44(sp)
-  14:	02812423          	sw	s0,40(sp)
-  18:	02912223          	sw	s1,36(sp)
-  1c:	03412023          	sw	s4,32(sp)
-  20:	03010413          	addi	s0,sp,48
-  24:	000017b7          	lui	a5,0x1
-  28:	00078793          	mv	a5,a5
-  2c:	fef42623          	sw	a5,-20(s0)
-  30:	00000493          	li	s1,0
-  34:	06c0006f          	j	a0 <main+0x94>
-  38:	00048793          	mv	a5,s1
-  3c:	4027d793          	srai	a5,a5,0x2
-  40:	fcf42e23          	sw	a5,-36(s0)
-  44:	00048793          	mv	a5,s1
-  48:	0037f793          	andi	a5,a5,3
-  4c:	fcf42c23          	sw	a5,-40(s0)
-  50:	fdc42783          	lw	a5,-36(s0)
-  54:	00279793          	slli	a5,a5,0x2
-  58:	fec42703          	lw	a4,-20(s0)
-  5c:	00f707b3          	add	a5,a4,a5
-  60:	0007a703          	lw	a4,0(a5) # 1000 <image_pixels>
-  64:	fd842783          	lw	a5,-40(s0)
-  68:	00379793          	slli	a5,a5,0x3
-  6c:	00f757b3          	srl	a5,a4,a5
-  70:	0ff7f793          	zext.b	a5,a5
-  74:	fcf42a23          	sw	a5,-44(s0)
-  78:	000027b7          	lui	a5,0x2
-  7c:	02478793          	addi	a5,a5,36 # 2024 <UART_TX_STAT+0x418>
-  80:	fd442703          	lw	a4,-44(s0)
-  84:	00e7a023          	sw	a4,0(a5)
-  88:	00000013          	nop
-  8c:	00000013          	nop
-  90:	00000013          	nop
-  94:	00048793          	mv	a5,s1
-  98:	00178793          	addi	a5,a5,1
-  9c:	00078493          	mv	s1,a5
-  a0:	00048713          	mv	a4,s1
-  a4:	08100793          	li	a5,129
-  a8:	f8e7d8e3          	bge	a5,a4,38 <main+0x2c>
-  ac:	08200493          	li	s1,130
-  b0:	0a80006f          	j	158 <main+0x14c>
-  b4:	00048793          	mv	a5,s1
-  b8:	4027d793          	srai	a5,a5,0x2
-  bc:	fef42423          	sw	a5,-24(s0)
-  c0:	00048793          	mv	a5,s1
-  c4:	0037f793          	andi	a5,a5,3
-  c8:	fef42223          	sw	a5,-28(s0)
-  cc:	fe842783          	lw	a5,-24(s0)
-  d0:	00279793          	slli	a5,a5,0x2
-  d4:	fec42703          	lw	a4,-20(s0)
-  d8:	00f707b3          	add	a5,a4,a5
-  dc:	0007a703          	lw	a4,0(a5)
-  e0:	fe442783          	lw	a5,-28(s0)
-  e4:	00379793          	slli	a5,a5,0x3
-  e8:	00f757b3          	srl	a5,a4,a5
-  ec:	0ff7f793          	zext.b	a5,a5
-  f0:	fef42023          	sw	a5,-32(s0)
-  f4:	000027b7          	lui	a5,0x2
-  f8:	02478793          	addi	a5,a5,36 # 2024 <UART_TX_STAT+0x418>
-  fc:	fe042703          	lw	a4,-32(s0)
- 100:	00e7a023          	sw	a4,0(a5)
- 104:	00000013          	nop
- 108:	00000013          	nop
- 10c:	00000013          	nop
- 110:	000027b7          	lui	a5,0x2
- 114:	02878793          	addi	a5,a5,40 # 2028 <UART_TX_STAT+0x41c>
- 118:	0007a783          	lw	a5,0(a5)
- 11c:	00078a13          	mv	s4,a5
- 120:	0080006f          	j	128 <main+0x11c>
- 124:	00000013          	nop
- 128:	000057b7          	lui	a5,0x5
- 12c:	00478793          	addi	a5,a5,4 # 5004 <UART_TX_STAT+0x33f8>
- 130:	0007a783          	lw	a5,0(a5)
- 134:	0017f713          	andi	a4,a5,1
- 138:	00100793          	li	a5,1
- 13c:	fef704e3          	beq	a4,a5,124 <main+0x118>
- 140:	000057b7          	lui	a5,0x5
- 144:	000a0713          	mv	a4,s4
- 148:	00e7a023          	sw	a4,0(a5) # 5000 <UART_TX_STAT+0x33f4>
- 14c:	00048793          	mv	a5,s1
- 150:	00178793          	addi	a5,a5,1
- 154:	00078493          	mv	s1,a5
- 158:	00048713          	mv	a4,s1
- 15c:	000017b7          	lui	a5,0x1
- 160:	bff78793          	addi	a5,a5,-1025 # bff <main+0xbf3>
- 164:	f4e7d8e3          	bge	a5,a4,b4 <main+0xa8>
- 168:	00000493          	li	s1,0
- 16c:	0640006f          	j	1d0 <main+0x1c4>
- 170:	000027b7          	lui	a5,0x2
- 174:	02478793          	addi	a5,a5,36 # 2024 <UART_TX_STAT+0x418>
- 178:	0007a023          	sw	zero,0(a5)
- 17c:	00000013          	nop
- 180:	00000013          	nop
- 184:	00000013          	nop
- 188:	000027b7          	lui	a5,0x2
- 18c:	02878793          	addi	a5,a5,40 # 2028 <UART_TX_STAT+0x41c>
- 190:	0007a783          	lw	a5,0(a5)
- 194:	00078a13          	mv	s4,a5
- 198:	0080006f          	j	1a0 <main+0x194>
- 19c:	00000013          	nop
- 1a0:	000057b7          	lui	a5,0x5
- 1a4:	00478793          	addi	a5,a5,4 # 5004 <UART_TX_STAT+0x33f8>
- 1a8:	0007a783          	lw	a5,0(a5)
- 1ac:	0017f713          	andi	a4,a5,1
- 1b0:	00100793          	li	a5,1
- 1b4:	fef704e3          	beq	a4,a5,19c <main+0x190>
- 1b8:	000057b7          	lui	a5,0x5
- 1bc:	000a0713          	mv	a4,s4
- 1c0:	00e7a023          	sw	a4,0(a5) # 5000 <UART_TX_STAT+0x33f4>
- 1c4:	00048793          	mv	a5,s1
- 1c8:	00178793          	addi	a5,a5,1
- 1cc:	00078493          	mv	s1,a5
- 1d0:	00048713          	mv	a4,s1
- 1d4:	08100793          	li	a5,129
- 1d8:	f8e7dce3          	bge	a5,a4,170 <main+0x164>
- 1dc:	0000006f          	j	1dc <main+0x1d0>
+00000054 <main>:
+  54:	fd010113          	addi	sp,sp,-48 # 1fd0 <UART_TX_STAT+0xfc4>
+  58:	02112623          	sw	ra,44(sp)
+  5c:	02812423          	sw	s0,40(sp)
+  60:	02912223          	sw	s1,36(sp)
+  64:	03412023          	sw	s4,32(sp)
+  68:	03010413          	addi	s0,sp,48
+  6c:	000017b7          	lui	a5,0x1
+  70:	40078793          	addi	a5,a5,1024 # 1400 <UART_TX_STAT+0x3f4>
+  74:	fef42623          	sw	a5,-20(s0)
+  78:	00000493          	li	s1,0
+  7c:	06c0006f          	j	e8 <main+0x94>
+  80:	00048793          	mv	a5,s1
+  84:	4027d793          	srai	a5,a5,0x2
+  88:	fcf42e23          	sw	a5,-36(s0)
+  8c:	00048793          	mv	a5,s1
+  90:	0037f793          	andi	a5,a5,3
+  94:	fcf42c23          	sw	a5,-40(s0)
+  98:	fdc42783          	lw	a5,-36(s0)
+  9c:	00279793          	slli	a5,a5,0x2
+  a0:	fec42703          	lw	a4,-20(s0)
+  a4:	00f707b3          	add	a5,a4,a5
+  a8:	0007a703          	lw	a4,0(a5)
+  ac:	fd842783          	lw	a5,-40(s0)
+  b0:	00379793          	slli	a5,a5,0x3
+  b4:	00f757b3          	srl	a5,a4,a5
+  b8:	0ff7f793          	zext.b	a5,a5
+  bc:	fcf42a23          	sw	a5,-44(s0)
+  c0:	000027b7          	lui	a5,0x2
+  c4:	02478793          	addi	a5,a5,36 # 2024 <UART_TX_STAT+0x1018>
+  c8:	fd442703          	lw	a4,-44(s0)
+  cc:	00e7a023          	sw	a4,0(a5)
+  d0:	00000013          	nop
+  d4:	00000013          	nop
+  d8:	00000013          	nop
+  dc:	00048793          	mv	a5,s1
+  e0:	00178793          	addi	a5,a5,1
+  e4:	00078493          	mv	s1,a5
+  e8:	00048713          	mv	a4,s1
+  ec:	10100793          	li	a5,257
+  f0:	f8e7d8e3          	bge	a5,a4,80 <main+0x2c>
+  f4:	10200493          	li	s1,258
+  f8:	0a80006f          	j	1a0 <main+0x14c>
+  fc:	00048793          	mv	a5,s1
+ 100:	4027d793          	srai	a5,a5,0x2
+ 104:	fef42423          	sw	a5,-24(s0)
+ 108:	00048793          	mv	a5,s1
+ 10c:	0037f793          	andi	a5,a5,3
+ 110:	fef42223          	sw	a5,-28(s0)
+ 114:	fe842783          	lw	a5,-24(s0)
+ 118:	00279793          	slli	a5,a5,0x2
+ 11c:	fec42703          	lw	a4,-20(s0)
+ 120:	00f707b3          	add	a5,a4,a5
+ 124:	0007a703          	lw	a4,0(a5)
+ 128:	fe442783          	lw	a5,-28(s0)
+ 12c:	00379793          	slli	a5,a5,0x3
+ 130:	00f757b3          	srl	a5,a4,a5
+ 134:	0ff7f793          	zext.b	a5,a5
+ 138:	fef42023          	sw	a5,-32(s0)
+ 13c:	000027b7          	lui	a5,0x2
+ 140:	02478793          	addi	a5,a5,36 # 2024 <UART_TX_STAT+0x1018>
+ 144:	fe042703          	lw	a4,-32(s0)
+ 148:	00e7a023          	sw	a4,0(a5)
+ 14c:	00000013          	nop
+ 150:	00000013          	nop
+ 154:	00000013          	nop
+ 158:	000027b7          	lui	a5,0x2
+ 15c:	02878793          	addi	a5,a5,40 # 2028 <UART_TX_STAT+0x101c>
+ 160:	0007a783          	lw	a5,0(a5)
+ 164:	00078a13          	mv	s4,a5
+ 168:	0080006f          	j	170 <main+0x11c>
+ 16c:	00000013          	nop
+ 170:	000057b7          	lui	a5,0x5
+ 174:	00478793          	addi	a5,a5,4 # 5004 <UART_TX_STAT+0x3ff8>
+ 178:	0007a783          	lw	a5,0(a5)
+ 17c:	0017f713          	andi	a4,a5,1
+ 180:	00100793          	li	a5,1
+ 184:	fef704e3          	beq	a4,a5,16c <main+0x118>
+ 188:	000057b7          	lui	a5,0x5
+ 18c:	000a0713          	mv	a4,s4
+ 190:	00e7a023          	sw	a4,0(a5) # 5000 <UART_TX_STAT+0x3ff4>
+ 194:	00048793          	mv	a5,s1
+ 198:	00178793          	addi	a5,a5,1
+ 19c:	00078493          	mv	s1,a5
+ 1a0:	00048713          	mv	a4,s1
+ 1a4:	000017b7          	lui	a5,0x1
+ 1a8:	bff78793          	addi	a5,a5,-1025 # bff <main+0xbab>
+ 1ac:	f4e7d8e3          	bge	a5,a4,fc <main+0xa8>
+ 1b0:	00000493          	li	s1,0
+ 1b4:	0640006f          	j	218 <main+0x1c4>
+ 1b8:	000027b7          	lui	a5,0x2
+ 1bc:	02478793          	addi	a5,a5,36 # 2024 <UART_TX_STAT+0x1018>
+ 1c0:	0007a023          	sw	zero,0(a5)
+ 1c4:	00000013          	nop
+ 1c8:	00000013          	nop
+ 1cc:	00000013          	nop
+ 1d0:	000027b7          	lui	a5,0x2
+ 1d4:	02878793          	addi	a5,a5,40 # 2028 <UART_TX_STAT+0x101c>
+ 1d8:	0007a783          	lw	a5,0(a5)
+ 1dc:	00078a13          	mv	s4,a5
+ 1e0:	0080006f          	j	1e8 <main+0x194>
+ 1e4:	00000013          	nop
+ 1e8:	000057b7          	lui	a5,0x5
+ 1ec:	00478793          	addi	a5,a5,4 # 5004 <UART_TX_STAT+0x3ff8>
+ 1f0:	0007a783          	lw	a5,0(a5)
+ 1f4:	0017f713          	andi	a4,a5,1
+ 1f8:	00100793          	li	a5,1
+ 1fc:	fef704e3          	beq	a4,a5,1e4 <main+0x190>
+ 200:	000057b7          	lui	a5,0x5
+ 204:	000a0713          	mv	a4,s4
+ 208:	00e7a023          	sw	a4,0(a5) # 5000 <UART_TX_STAT+0x3ff4>
+ 20c:	00048793          	mv	a5,s1
+ 210:	00178793          	addi	a5,a5,1
+ 214:	00078493          	mv	s1,a5
+ 218:	00048713          	mv	a4,s1
+ 21c:	10100793          	li	a5,257
+ 220:	f8e7dce3          	bge	a5,a4,1b8 <main+0x164>
+ 224:	0000006f          	j	224 <main+0x1d0>

@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include "image_data.h"
 
 // 4KB Memory Map Addresses
 volatile uint32_t* const ACCEL_PIX_IN  = (uint32_t*)0x00002024; 
@@ -11,11 +10,9 @@ int main() {
     register int i asm("s1");
     register uint32_t final_pixel asm("s4");
     
-    // THE BYPASS: Treat the 8-bit array as a 32-bit word array
-    // This prevents the CPU from trying to execute a faulty 'lbu' byte-load
-    uint32_t* words_array = (uint32_t*)image_pixels;
-
-    // ... setup and pointers ...
+    // THE BYPASS: Point directly to the start of DMEM (0x00001000).
+    // The UART Bootloader just finished loading our 4KB image exactly here!
+    uint32_t* words_array = (uint32_t*)0x00001400;
 
     // PHASE 1: WARM UP (258 Pixels for 5x5)
     for (i = 0; i < 258; i++) {

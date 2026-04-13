@@ -19,13 +19,13 @@ SRC_SORT         = code_sort.c
 SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
-SRC_VISION       = brute_vision.c      # <--- NEW: Added vision source
+SRC_VISION       = code_vision_5x5.c      # <--- NEW: Added vision source
 # SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
 
-PATCH_BIT ?= 0
+PATCH_BIT      ?= 0
 MEMORY_MAP_DIR ?= memory-map
-BIT_IN ?= D:/New/Image_processing/Image_processing.runs/impl_1/top_fpga.bit
-BIT_OUT ?= D:/New/Image_processing/Image_processing.runs/impl_1/fast_update.bit
+BIT_IN         ?= D:/New/Image_processing/Image_processing.runs/impl_1/top_fpga.bit
+BIT_OUT        ?= D:/New/Image_processing/Image_processing.runs/impl_1/fast_update.bit
 
 TARGET           = code.elf
 .PHONY: all clean vision              # <--- NEW: Added vision to phony
@@ -88,10 +88,15 @@ vision: $(SRC_VISION)
 	
 	$(OBJDUMP) -d vision.elf > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
-	if [ "$(PATCH_BIT)" = "1" ]; then \
+	
+	if [ "$(PATCH_BIT)" = "0" ]; then \
 		$(MAKE) -C $(MEMORY_MAP_DIR) flash_fast BIT_IN="$(BIT_IN)" BIT_OUT="$(BIT_OUT)"; \
 	fi
 
 # /////clean function
 clean:
 	$(RM) $(TARGET) ./imem_dmem/imem.bin ./imem_dmem/imem.hex ./imem_dmem/dmem.bin ./imem_dmem/dmem.hex ./imem_dmem/code.dis
+	$(MAKE) -C $(MEMORY_MAP_DIR) clean
+
+# clean_m:
+# 	$(RM) $(TARGET) ./imem_dmem/imem.bin ./imem_dmem/imem.hex ./imem_dmem/dmem.bin ./imem_dmem/dmem.hex ./imem_dmem/code.dis

@@ -17,7 +17,7 @@ print("-> PRESS THE RESET BUTTON ON YOUR FPGA NOW <-")
 
 try:
     # Open the serial port
-    with serial.Serial(COM_PORT, BAUD_RATE, timeout=10) as ser:
+    with serial.Serial(COM_PORT, BAUD_RATE, timeout=30) as ser:
         
         print("Waiting for data...")
         raw_data = ser.read(TOTAL_PIXELS)

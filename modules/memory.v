@@ -46,7 +46,7 @@ module data_mem (
 	// Declare data memory array (word-addressable, 4 KB total)
 	// TODO-DMEM-1: Declare dmem
     (* ram_style = "block" *)
-	(* dont_touch = "true" *)
+	// (* dont_touch = "true" *)
 	reg [31:0] dmem [0:1023];
 	// Decode byte address to word index
 	wire [9:0] rindex = raddr[11:2];

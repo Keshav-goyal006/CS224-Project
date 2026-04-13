@@ -1,0 +1,28 @@
+# Addr   Hex Code    Assembly                      Explanation
+# ---------------------------------------------------------------------------------
+# 00     000083b7    lui x7, 0x8                 # x7 = 0x8000 (Mask for SW[15])
+# 04     000062b7    lui x5, 0x6                 # x5 = 0x6000 (Switch base address)
+# 08     0002a303    lw  x6, 0(x5)               # Read switches into x6
+# 0C     00737333    and x6, x6, x7              # x6 = switches & 0x8000
+# 10     02030c63    beq x6, x0, 56              # If SW[15] == 0, jump to Main (PC+56)
+
+# --- Initialize Load Pointers ---
+# 14     00001eb7    lui x29, 0x1                # x29 = 0x1000 (DMEM Start Address)
+# 18     00002e37    lui x28, 0x2                # x28 = 0x2000 (DMEM End Address)
+
+# --- wait_for_uart ---
+# 1C     000052b7    lui x5, 0x5                 # x5 = 0x5000 (UART base address)
+# 20     00c2a303    lw  x6, 12(x5)              # Read UART Ready (Offset 0x0C)
+# 24     fe030ce3    beq x6, x0, -8              # If Ready == 0, loop back to 1C
+# 28     0082a303    lw  x6, 8(x5)               # Read UART Data (Offset 0x08)
+# 2C     006e8023    sb  x6, 0(x29)              # Store byte into DMEM
+# 30     001e8e93    addi x29, x29, 1            # Increment DMEM address
+# 34     ffcec4e3    blt x29, x28, -24           # If Address < 0x2000, loop back to 1C
+
+# --- wait_for_switch_off ---
+# 38     000062b7    lui x5, 0x6                 # x5 = 0x6000 (Switch base address)
+# 3C     0002a303    lw  x6, 0(x5)               # Read switches into x6
+# 40     00737333    and x6, x6, x7              # x6 = switches & 0x8000
+# 44     fe031ae3    bne x6, x0, -12             # If SW[15] == 1, loop back to 38
+
+# --- Main Program Begins Here (Address 0x48) ---

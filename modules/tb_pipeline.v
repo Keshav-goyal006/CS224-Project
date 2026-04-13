@@ -84,8 +84,9 @@ module tb_pipeline;
     wire uart_txd; // Dummy wire for simulation
 
     soc_interconnect bus (
-        .clk        (clk),        // <-- ADD THIS
-        .reset      (reset),      // <-- ADD THIS
+        .clk        (clk),        
+        .reset      (reset),      
+        
         .cpu_waddr  (dmem_write_address), 
         .cpu_raddr  (dmem_read_address),  
         .cpu_wdata  (dmem_write_data),
@@ -103,7 +104,11 @@ module tb_pipeline;
         .dmem_rdata (dmem_read_data),
         .vram_rdata (8'b0), // We don't need VRAM/VGA in simulation
         .accel_rdata(accel_rdata),
-        .uart_rdata ({31'b0, tx_active}) 
+        
+        // UPDATED: The new split UART interfaces
+        .tx_active  (tx_active),
+        .rx_data_in (8'h00), // Dummy 0 for simulation
+        .rx_valid_in(1'b0)   // Dummy 0 for simulation
     );
 
     // =================================================================

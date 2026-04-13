@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
 module top_fpga #(
-    parameter IMEMSIZE = 65536, // Expanded to 64KB
-    parameter DMEMSIZE = 65536  // Expanded to 64KB
+    parameter IMEMSIZE = 65536, // 64KB
+    parameter DMEMSIZE = 65536  // 64KB
 )(
     input  wire clk,        // fast board clock (100 MHz)
     input  wire reset,      // active-low reset
@@ -16,7 +16,9 @@ module top_fpga #(
     output wire vga_hs,
     output wire vga_vs,
 
-    output wire uart_txd
+    // --- UART PINS ---
+    output wire uart_txd,    // Transmit to PC
+    input  wire uart_rxd     // Receive from PC
 );
 
     // -----------------------------------------------------------------
@@ -27,12 +29,12 @@ module top_fpga #(
         if (!reset) clk_div <= 2'b00;
         else clk_div <= clk_div + 1'b1;
     end
-    wire clk_25MHz = clk_div[1]; 
+    wire clk_25MHz = clk_div[1];
 
     // -----------------------------------------------------------------
-    // PIPE ↔ MEMORY WIRES
+    // CPU ↔ MEMORY WIRES
     // -----------------------------------------------------------------
-    wire [31:0] pc_out_w;   
+    wire [31:0] pc_out_w;
     wire exception;
 
     wire [31:0] inst_mem_read_data;
@@ -47,6 +49,8 @@ module top_fpga #(
     wire [31:0] dmem_write_data;
     wire [3:0]  dmem_write_byte;
 
+    wire [31:0] cpu_rdata_mux; // Data coming BACK from the Interconnect to the CPU
+    
     // -----------------------------------------------------------------
     // PIPELINE CPU (Running at 25 MHz)
     // -----------------------------------------------------------------
@@ -62,7 +66,7 @@ module top_fpga #(
         .inst_mem_address    (inst_mem_address),
         
         .dmem_read_valid     (1'b1),
-        .dmem_read_data_temp (cpu_rdata_mux), // Connect to interconnect mux!
+        .dmem_read_data_temp (cpu_rdata_mux), // Connects to Interconnect Mux
         .dmem_read_ready     (dmem_read_ready),
         .dmem_read_address   (dmem_read_address),
         
@@ -74,25 +78,41 @@ module top_fpga #(
     );
 
     // -----------------------------------------------------------------
-    // SOC INTERCONNECT & PERIPHERALS
+    // UART RECEIVER (Listens to the PC)
     // -----------------------------------------------------------------
-    wire [31:0] cpu_rdata_mux;
+    wire [7:0] uart_byte;
+    wire       uart_done;
+    
+    uart_rx #(
+        .CLOCKS_PER_BIT(217) // 25MHz / 115200 baud = 217
+    ) uart_rx_inst (
+        .clk(clk_25MHz),
+        .rx(uart_rxd),       // Physical wire from PC
+        .rx_data(uart_byte), // Data goes to Interconnect
+        .rx_done(uart_done)  // Flag goes to Interconnect
+    );
+
+    // -----------------------------------------------------------------
+    // SOC INTERCONNECT (The Traffic Cop)
+    // -----------------------------------------------------------------
     wire dmem_we_actual, accel_we, vram_we, uart_we, led_we, sim_trap_we;
     wire [31:0] accel_rdata;
     wire tx_active;
+    wire [7:0] vga_pixel_data;
 
-    // 1. The Interconnect (Traffic Cop)
     soc_interconnect bus (
-        .clk        (clk_25MHz),          // New Clock Port
-        .reset      (reset),              // New Reset Port
+        .clk        (clk_25MHz),          
+        .reset      (reset),              
         
-        .cpu_waddr  (dmem_write_address), // Separated Write Address
-        .cpu_raddr  (dmem_read_address),  // Separated Read Address
+        // CPU Master Ports
+        .cpu_waddr  (dmem_write_address), 
+        .cpu_raddr  (dmem_read_address), 
         .cpu_wdata  (dmem_write_data),
         .cpu_we     (dmem_write_ready), 
         .cpu_re     (dmem_read_ready),
         .cpu_rdata  (cpu_rdata_mux),      
 
+        // Write Enables to Peripherals
         .dmem_we    (dmem_we_actual),
         .vram_we    (vram_we),
         .accel_we   (accel_we),
@@ -100,12 +120,37 @@ module top_fpga #(
         .uart_we    (uart_we),
         .sim_trap_we(sim_trap_we),
 
+        // Read Data from Peripherals
         .dmem_rdata (dmem_read_data),
         .vram_rdata (vga_pixel_data), 
         .accel_rdata(accel_rdata),
-        .uart_rdata ({31'b0, tx_active})
+        
+        // UART Split Interfaces
+        .tx_active  (tx_active),
+        .rx_data_in (uart_byte),
+        .rx_valid_in(uart_done),
+
+        .sw_in      (sw)
     );
 
+    // -----------------------------------------------------------------
+    // DATA MEMORY (DMEM)
+    // -----------------------------------------------------------------
+    data_mem DMEM (
+        .clk(clk_25MHz), 
+        .re(dmem_read_ready), 
+        .raddr(dmem_read_address), 
+        .rdata(dmem_read_data), 
+        .we(dmem_we_actual),         // Directly from Interconnect
+        .waddr(dmem_write_address),  // Directly from CPU
+        .wdata(dmem_write_data),     // Directly from CPU
+        .wstrb(dmem_write_byte)      // Directly from CPU
+    );
+
+    // -----------------------------------------------------------------
+    // PERIPHERALS & ACCELERATOR
+    // -----------------------------------------------------------------
+    
     // LED Register Logic
     reg [15:0] led_reg;
     always @(posedge clk_25MHz or negedge reset) begin
@@ -114,43 +159,20 @@ module top_fpga #(
     end
     assign led = led_reg;
 
-    // 2. Hardware Accelerator
-    // conv_accelerator my_conv (
-    //     .clk    (clk_25MHz),
-    //     .reset  (reset),
-    //     .we     (accel_we),
-    //     .waddr  (dmem_write_address),
-    //     .wdata  (dmem_write_data),
-    //     .raddr  (dmem_read_address),
-    //     .rdata  (accel_rdata)
-    // );
-
-    // 2. Hardware Accelerator
-    // stream_accel #(.IMG_WIDTH(64)) my_conv (
-    //     .clk      (clk_25MHz),
-    //     .reset    (reset),
-    //     .switches (sw[3:0]), // Pass the first 4 physical switches!
-    //     .we       (accel_we),
-    //     .waddr    (dmem_write_address),
-    //     .wdata    (dmem_write_data),
-    //     .raddr    (dmem_read_address),
-    //     .rdata    (accel_rdata)
-    // );
-
+    // Convolution Accelerator
     stream_accel_5x5 #(.IMG_WIDTH(64)) my_conv (
-        .clk      (clk_25MHz),         // Use the raw testbench clock
+        .clk      (clk_25MHz),         
         .reset    (reset),
-        .switches (sw),          // Pass the simulated testbench switches
+        .switches (sw),          
         .we       (accel_we),
         .waddr    (dmem_write_address),
         .wdata    (dmem_write_data),
         .raddr    (dmem_read_address),
         .rdata    (accel_rdata)
     );
-    
-    // 3. UART Transmitter
-    // 3. UART Transmitter
-    uart_tx #( .CLKS_PER_BIT(217) ) my_uart (
+
+    // UART Transmitter (Talks to the PC)
+    uart_tx #( .CLKS_PER_BIT(217) ) uart_tx_inst (
         .clk        (clk_25MHz), 
         .reset      (reset),
         .tx_start   (uart_we), 
@@ -159,22 +181,11 @@ module top_fpga #(
         .tx_serial  (uart_txd) 
     );
 
-    // 4. Base Memory
+    // Base Instruction Memory
     instr_mem IMEM (
         .clk(clk_25MHz), 
         .pc(inst_mem_address), 
         .instr(inst_mem_read_data)
-    );
-    
-    data_mem DMEM (
-        .clk(clk_25MHz), 
-        .re(dmem_read_ready), 
-        .raddr(dmem_read_address), 
-        .rdata(dmem_read_data), 
-        .we(dmem_we_actual), // Protected by Interconnect
-        .waddr(dmem_write_address), 
-        .wdata(dmem_write_data), 
-        .wstrb(dmem_write_byte)
     );
 
     // -----------------------------------------------------------------
@@ -183,27 +194,18 @@ module top_fpga #(
     wire [9:0] vga_x;
     wire [9:0] vga_y;
     wire video_on;
-    wire [7:0] vga_pixel_data;
 
-    // Convert the massive 32-bit CPU address down to a 0-19199 array index for the VRAM module
     wire [14:0] vram_write_addr = dmem_write_address - 32'h00030000;
-    
-    // Instantiate Dual-Port VRAM
+
     dual_port_vram VRAM (
         .clk    (clk_25MHz),
-        
-        // Port A: CPU Write
-        .we_a   (vram_we), // Now strictly controlled by the Interconnect!
+        .we_a   (vram_we), 
         .addr_a (vram_write_addr),
         .din_a  (dmem_write_data[7:0]),
-        
-        // Port B: VGA Read
-        // Scale 640x480 to 160x120 by dividing X and Y by 4 (bit shifting by 2)
         .addr_b ( ((vga_y >> 2) * 160) + (vga_x >> 2) ),
         .dout_b (vga_pixel_data)
     );
 
-    // Instantiate VGA Timing Controller
     vga_controller VGA_CTRL (
         .clk_25MHz (clk_25MHz),
         .reset     (reset),
@@ -214,8 +216,7 @@ module top_fpga #(
         .y         (vga_y)
     );
 
-    // Map 8-bit grayscale VRAM data to 12-bit RGB Nexys A7 Output
-    // If video_on is false, we MUST output black to keep the monitor synced
+    // Grayscale mapping for VGA output
     assign vga_r = video_on ? vga_pixel_data[7:4] : 4'h0;
     assign vga_g = video_on ? vga_pixel_data[7:4] : 4'h0;
     assign vga_b = video_on ? vga_pixel_data[7:4] : 4'h0;

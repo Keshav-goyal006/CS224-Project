@@ -14,6 +14,8 @@ PROC ?= my_riscv_cpu
 .PHONY: flash_fast
 
 flash_fast: $(ELF) $(MMI) $(BIT_IN)
+	@echo "Removing old memory files..."
+	@rm -f $(BIT_OUT)
 	@echo "Injecting IMEM..."
 	$(UPDATEMEM) -force -meminfo $(MMI) -data $(IMEM_HEX) -proc $(PROC) -bit $(BIT_IN) -out $(BIT_OUT)
 	@test -f "$(BIT_OUT)"
