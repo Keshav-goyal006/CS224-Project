@@ -1,5 +1,6 @@
 import sys
 from PIL import Image
+from io import BytesIO
 
 def convert_image(image_path):
     try:
