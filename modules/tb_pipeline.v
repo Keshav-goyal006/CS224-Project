@@ -25,7 +25,7 @@ module tb_pipeline;
     // ADD THIS: Define switches and select a kernel
     reg [3:0] sw;
     initial begin
-        sw = 4'b0001; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
+        sw = 4'b0111; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
     end
 
 
@@ -132,15 +132,18 @@ module tb_pipeline;
     // =================================================================
     // 3. HARDWARE ACCELERATOR (5x5 Upgrade!)
     // =================================================================
-    stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
-        .clk      (clk),         // Use the raw testbench clock
+    // -----------------------------------------------------------------
+    // 5x5 RGB Hardware Accelerator
+    // -----------------------------------------------------------------
+    stream_accel_5x5_rgb #(.IMG_WIDTH(128)) my_rgb_conv (
+        .clk      (clk),         
         .reset    (reset),
-        .switches (sw),          // Pass the simulated testbench switches
+        .switches (sw[3:0]),         // 4 physical switches for filter selection
         .we       (accel_we),
         .waddr    (dmem_write_address),
-        .wdata    (dmem_write_data),
+        .wdata    (dmem_write_data), // Pushing {8'h00, R, G, B}
         .raddr    (dmem_read_address),
-        .rdata    (accel_rdata)
+        .rdata    (accel_rdata)      // Receiving {8'h00, R, G, B}
     );
 
     // =================================================================
@@ -219,22 +222,43 @@ module tb_pipeline;
     //     end
     // end
 
+    // always @(posedge clk) begin
+    //     // NEW ADDRESS: 0x00015000 for UART TX
+    //     if (dmem_write_ready && dmem_write_address == 32'h00015000) begin
+            
+    //         // Write the 8-bit pixel to the text file
+    //         $fdisplay(file_out, "%d", dmem_write_data[7:0]);
+    //         pixel_count = pixel_count + 1;
+            
+    //         // Print progress to the terminal every 1,000 pixels 
+    //         if (pixel_count % 10000 == 0) begin
+    //             $display("Simulated %0d / 49152 pixels...", pixel_count);
+    //         end
+
+    //         // NEW COUNT: exactly 256x192 pixels
+    //         if (pixel_count == 49152) begin
+    //             $display("SUCCESS: All 49152 pixels generated!");
+    //             $fclose(file_out);
+    //             $finish;
+    //         end
+    //     end
+    // end
+
     always @(posedge clk) begin
         // NEW ADDRESS: 0x00015000 for UART TX
         if (dmem_write_ready && dmem_write_address == 32'h00015000) begin
             
-            // Write the 8-bit pixel to the text file
-            $fdisplay(file_out, "%d", dmem_write_data[7:0]);
+            // FIX A: Write the FULL 32-bit RGB word as a Hex string
+            $fdisplay(file_out, "0x%08X", dmem_write_data);
             pixel_count = pixel_count + 1;
             
-            // Print progress to the terminal every 1,000 pixels 
-            if (pixel_count % 10000 == 0) begin
-                $display("Simulated %0d / 49152 pixels...", pixel_count);
+            if (pixel_count % 1000 == 0) begin
+                $display("Simulated %0d / 12288 pixels...", pixel_count);
             end
 
-            // NEW COUNT: exactly 256x192 pixels
-            if (pixel_count == 49152) begin
-                $display("SUCCESS: All 49152 pixels generated!");
+            // FIX B: Stop at 12,288 (128x96 image)
+            if (pixel_count == 12288) begin
+                $display("SUCCESS: All 12288 RGB pixels generated!");
                 $fclose(file_out);
                 $finish;
             end

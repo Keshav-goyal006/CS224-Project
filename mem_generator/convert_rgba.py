@@ -1,31 +1,37 @@
 from PIL import Image
 
-def convert_rgb_image(input_filename, output_filename):
-    # Resize to 64x48 and keep as RGB
-    img = Image.open(input_filename).resize((64, 48)).convert('RGB')
-    pixels = list(img.getdata()) # Returns a list of tuples: [(R,G,B), (R,G,B)...]
+def convert_image(input_filename, output_filename):
+    # Open image, convert to RGB, and scale to 128x96
+    img = Image.open(input_filename).convert("RGB")
+    img = img.resize((128, 96))
+    pixels = img.load()
 
-    with open(output_filename, 'w') as f:
+    with open(output_filename, "w") as f:
+        f.write("#ifndef IMAGE_DATA_H\n")
+        f.write("#define IMAGE_DATA_H\n\n")
         f.write("#include <stdint.h>\n\n")
-        f.write("// 64x48 RGB Image (9216 Bytes)\n")
-        # Multiply length by 3 because each pixel has 3 numbers
-        f.write(f"const uint8_t image_pixels[{len(pixels) * 3}] = {{\n")
         
-        for r, g, b in pixels:
-            f.write(f"    {r}, {g}, {b},\n")
-            
-        f.write("};\n")
-    print("Success! Converted to RGB C-Header.")
+        # 128 * 96 = 12,288 pixels
+        f.write("const uint32_t image_array[12288] = {\n")
 
-def convert_rgb_image_to_txt(input_filename, output_filename):
-    img = Image.open(input_filename).resize((64, 48)).convert('RGB')
-    pixels = list(img.getdata())
+        count = 0
+        for y in range(96):
+            for x in range(128):
+                r, g, b = pixels[x, y]
+                
+                # Pack into 32-bit word: 0x00RRGGBB
+                hex_val = (r << 16) | (g << 8) | b
+                
+                f.write(f"0x{hex_val:08X}, ")
+                count += 1
+                
+                # formatting for readability
+                if count % 8 == 0:
+                    f.write("\n")
 
-    with open(output_filename, 'w') as f:
-        for r, g, b in pixels:
-            # Write out each color channel on a new line
-            f.write(f"{r}\n{g}\n{b}\n")
-    print("Success! Converted to RGB TXT.")
+        f.write("};\n\n")
+        f.write("#endif\n")
+        print(f"Successfully converted {input_filename} to {output_filename}")
 
-convert_rgb_image('image.png', 'image_data_rgba.h')
-convert_rgb_image_to_txt('image.png', '../sim/original_image_rgb.txt')
+# Run the conversion
+convert_image("image.png", "image_data_rgb.h")

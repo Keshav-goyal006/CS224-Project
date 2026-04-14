@@ -37,5 +37,6 @@ clean:
 	@rm -f xvlog.log xvlog.pb xelab.log xelab.pb xsim.log xsim.jou xsim.pb
 	@rm -f pipeline.vcd
 	@rm -f imem.hex dmem.hex # <--- NEW: Cleans up the copied hex files in this dir
+	$(MAKE) clean -C $(MEM_GEN) # <--- NEW: Also cleans up the mem_generator directory
 	@rm -f riscv_sim.wdb # <--- NEW: Cleans up the waveform database file
 	@rm -f stdout

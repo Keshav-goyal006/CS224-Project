@@ -1,14 +1,180 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MemInfo Version="1" Minor="0">
-  <Processor Endianness="Little" InstPath="my_riscv_cpu"> 
+  <Processor Endianness="Little" InstPath="IMEM_CORE"> 
     
-    <AddressSpace Name="IMEM" Begin="0" End="4095">
+    <AddressSpace Name="IMEM" Begin="0" End="14847">
       <BusBlock>
-        <BitLane MemType="RAMB32" Placement="X0Y7"> <DataWidth MSB="31" LSB="0"/>
+        <BitLane MemType="RAMB32" Placement="X1Y11"> <DataWidth MSB="31" LSB="0"/>
           <AddressRange Begin="0" End="1023"/>
           <Parity ON="false" NumBits="0"/>
         </BitLane>
       </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X2Y11"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="1024" End="2047"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X1Y10"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="2048" End="3071"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X2Y10"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="3072" End="4095"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X2Y9"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="4096" End="5119"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X3Y11"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="5120" End="6143"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X1Y12"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="6144" End="7167"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X1Y14"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="7168" End="8191"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X2Y12"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="8192" End="9215"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X1Y13"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="9216" End="10239"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X0Y13"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="10240" End="11263"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X3Y12"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="11264" End="12287"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X3Y10"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="12288" End="13311"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X2Y13"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="13312" End="14335"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X0Y28"> <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="14336" End="14847"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+    </AddressSpace>
+  </Processor>
+
+  <Processor Endianness="Little" InstPath="DMEM_CORE">
+    <AddressSpace Name="DMEM" Begin="0" End="16383">
+      
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X0Y3"> <DataWidth MSB="31" LSB="24"/>
+          <AddressRange Begin="0" End="4095"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X1Y5"> <DataWidth MSB="23" LSB="16"/>
+          <AddressRange Begin="0" End="4095"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y2"> <DataWidth MSB="15" LSB="8"/>
+          <AddressRange Begin="0" End="4095"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X1Y6"> <DataWidth MSB="7" LSB="0"/>
+          <AddressRange Begin="0" End="4095"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X0Y4"> <DataWidth MSB="31" LSB="24"/>
+          <AddressRange Begin="4096" End="8191"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y5"> <DataWidth MSB="23" LSB="16"/>
+          <AddressRange Begin="4096" End="8191"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y10"> <DataWidth MSB="15" LSB="8"/>
+          <AddressRange Begin="4096" End="8191"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X1Y7"> <DataWidth MSB="7" LSB="0"/>
+          <AddressRange Begin="4096" End="8191"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X0Y7"> <DataWidth MSB="31" LSB="24"/>
+          <AddressRange Begin="8192" End="12287"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y6"> <DataWidth MSB="23" LSB="16"/>
+          <AddressRange Begin="8192" End="12287"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y12"> <DataWidth MSB="15" LSB="8"/>
+          <AddressRange Begin="8192" End="12287"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y11"> <DataWidth MSB="7" LSB="0"/>
+          <AddressRange Begin="8192" End="12287"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X0Y9"> <DataWidth MSB="31" LSB="24"/>
+          <AddressRange Begin="12288" End="16383"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X1Y8"> <DataWidth MSB="23" LSB="16"/>
+          <AddressRange Begin="12288" End="16383"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X1Y9"> <DataWidth MSB="15" LSB="8"/>
+          <AddressRange Begin="12288" End="16383"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+        <BitLane MemType="RAMB32" Placement="X0Y8"> <DataWidth MSB="7" LSB="0"/>
+          <AddressRange Begin="12288" End="16383"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+
     </AddressSpace>
   </Processor>
   <Config>

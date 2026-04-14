@@ -186,7 +186,7 @@ module top_fpga #(
     wire [7:0] vga_pixel_data;
 
     // Convert the massive 32-bit CPU address down to a 0-19199 array index for the VRAM module
-    wire [14:0] vram_write_addr = dmem_write_address - 32'h00030000;
+    wire [15:0] vram_write_addr = dmem_write_address[15:0];
     
     // Instantiate Dual-Port VRAM
     dual_port_vram VRAM (
@@ -199,7 +199,7 @@ module top_fpga #(
         
         // Port B: VGA Read
         // Scale 640x480 to 160x120 by dividing X and Y by 4 (bit shifting by 2)
-        .addr_b ( ((vga_y >> 2) * 160) + (vga_x >> 2) ),
+        .addr_b ( ((vga_y >> 1) * 256) + (vga_x >> 1) ),
         .dout_b (vga_pixel_data)
     );
 
@@ -216,8 +216,14 @@ module top_fpga #(
 
     // Map 8-bit grayscale VRAM data to 12-bit RGB Nexys A7 Output
     // If video_on is false, we MUST output black to keep the monitor synced
-    assign vga_r = video_on ? vga_pixel_data[7:4] : 4'h0;
-    assign vga_g = video_on ? vga_pixel_data[7:4] : 4'h0;
-    assign vga_b = video_on ? vga_pixel_data[7:4] : 4'h0;
+    // assign vga_r = video_on ? vga_pixel_data[7:4] : 4'h0;
+    // assign vga_g = video_on ? vga_pixel_data[7:4] : 4'h0;
+    // assign vga_b = video_on ? vga_pixel_data[7:4] : 4'h0;
+
+    wire valid_draw_area = video_on && (vga_x < 512) && (vga_y < 384);
+
+    assign vga_r = valid_draw_area ? vga_pixel_data[7:4] : 4'h0;
+    assign vga_g = valid_draw_area ? vga_pixel_data[7:4] : 4'h0;
+    assign vga_b = valid_draw_area ? vga_pixel_data[7:4] : 4'h0;
 
 endmodule

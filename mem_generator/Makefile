@@ -19,7 +19,7 @@ SRC_SORT         = code_sort.c
 SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
-SRC_VISION       = code_vision_5x5.c      # <--- NEW: Added vision source
+SRC_VISION       = code_rgb_vision.c      # <--- NEW: Added vision source
 # SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
 
 PATCH_BIT ?= 0
@@ -95,3 +95,4 @@ vision: $(SRC_VISION)
 # /////clean function
 clean:
 	$(RM) $(TARGET) ./imem_dmem/imem.bin ./imem_dmem/imem.hex ./imem_dmem/dmem.bin ./imem_dmem/dmem.hex ./imem_dmem/code.dis
+	$(MAKE) clean -C memory-map # <--- NEW: Also cleans up the memory-map directory

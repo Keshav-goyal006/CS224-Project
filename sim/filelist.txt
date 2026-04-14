@@ -14,3 +14,5 @@
 ../modules/stream_accel_5x5.v
 ../modules/stream_accel_9x9.v
 ../modules/stream_accel_5x5_core.v
+../modules/stream_accel_5x5_rgb.v
+../modules/line_buffer_rgb.v
