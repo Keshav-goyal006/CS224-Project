@@ -1,7 +1,7 @@
 import struct
 import time
 MEMINIT = 1
-RAMSIZE = 4096
+RAMSIZE = 4096*16
 
 def hexChange(string):
     string = string[2:]

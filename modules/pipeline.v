@@ -80,11 +80,12 @@
 	wire 	wb_stall_second;
 	wire	wb_stall;
 
-    localparam [31:0] MMIO_CONV_BASE  = 32'h00002000;
-    localparam [31:0] MMIO_CONV_LIMIT = 32'h00002100;
-    localparam [31:0] MMIO_SWITCH_ADDR = 32'h00003100;
-    localparam [31:0] MMIO_LED_ADDR   = 32'h00003000;
-    localparam [31:0] MMIO_TRAP_ADDR  = 32'h00004000;
+    // Pushed safely above the 64KB (0xFFFF) Data Memory boundary
+    localparam [31:0] MMIO_CONV_BASE  = 32'h00012000;
+    localparam [31:0] MMIO_CONV_LIMIT = 32'h00012100;
+    localparam [31:0] MMIO_LED_ADDR   = 32'h00013000;
+    localparam [31:0] MMIO_TRAP_ADDR  = 32'h00014000;
+    localparam [31:0] MMIO_SWITCH_ADDR= 32'h00016000; // Place wherever you want above 0x15000
         	 
        	 
 	//Execute Stage

@@ -42,5 +42,5 @@ def render_hardware_image(txt_filename, output_filename, width, height, scale_fa
 if __name__ == "__main__":
     # Ensure these match the exact size you set in your C-code!
     # If you used the 4KB memory trick, set this to width=64, height=48
-    render_hardware_image('simulated_pixels.txt', 'final_output.png', width=64, height=48)
-    render_hardware_image('original_image.txt', 'original_input.jpg', width=64, height=48)
+    render_hardware_image('simulated_pixels.txt', 'final_output.png', width=256, height=192)
+    render_hardware_image('original_image.txt', 'original_input.jpg', width=256, height=192)

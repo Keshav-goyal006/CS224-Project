@@ -25,7 +25,7 @@ module tb_pipeline;
     // ADD THIS: Define switches and select a kernel
     reg [3:0] sw;
     initial begin
-        sw = 4'b0111; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
+        sw = 4'b0001; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
     end
 
 
@@ -132,7 +132,7 @@ module tb_pipeline;
     // =================================================================
     // 3. HARDWARE ACCELERATOR (5x5 Upgrade!)
     // =================================================================
-    stream_accel_5x5 #(.IMG_WIDTH(64)) my_conv (
+    stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
         .clk      (clk),         // Use the raw testbench clock
         .reset    (reset),
         .switches (sw),          // Pass the simulated testbench switches
@@ -198,12 +198,14 @@ module tb_pipeline;
     ////////////////////////////////////////////////////////////
     integer file_out;
     integer pixel_count;
+    integer cnt;
 
 
     initial begin
         // Open a text file to save the pixels
         file_out = $fopen("simulated_pixels.txt", "w");
         pixel_count = 0;
+        cnt = 0;
     end
 
     // -------------------------------------------------------------------------
@@ -218,23 +220,21 @@ module tb_pipeline;
     // end
 
     always @(posedge clk) begin
-        // In code_vision.c, the UART TX DATA register is at 0x00005000.
-        // Whenever the CPU writes to this address, intercept the pixel!
-        if (dmem_write_ready && dmem_write_address == 32'h00005000) begin
+        // NEW ADDRESS: 0x00015000 for UART TX
+        if (dmem_write_ready && dmem_write_address == 32'h00015000) begin
             
             // Write the 8-bit pixel to the text file
             $fdisplay(file_out, "%d", dmem_write_data[7:0]);
             pixel_count = pixel_count + 1;
             
             // Print progress to the terminal every 1,000 pixels 
-            // so you know the simulation hasn't frozen
-            if (pixel_count % 1000 == 0) begin
-                $display("Simulated %0d / 19200 pixels...", pixel_count);
+            if (pixel_count % 10000 == 0) begin
+                $display("Simulated %0d / 49152 pixels...", pixel_count);
             end
 
-            // Once we hit exactly 160x120 pixels, stop the simulation!
-            if (pixel_count == 3072) begin
-                $display("SUCCESS: All 3072 pixels generated!");
+            // NEW COUNT: exactly 256x192 pixels
+            if (pixel_count == 49152) begin
+                $display("SUCCESS: All 49152 pixels generated!");
                 $fclose(file_out);
                 $finish;
             end
@@ -262,8 +262,12 @@ module tb_pipeline;
     ////////////////////////////////////////////////////////////
     // ACCELERATOR DIAGNOSTIC MONITOR
     ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // ACCELERATOR DIAGNOSTIC MONITOR
+    ////////////////////////////////////////////////////////////
     always @(posedge clk) begin
-        if (dmem_write_ready && dmem_write_address == 32'h00004000) begin
+        // NEW ADDRESS: 0x00014000 for SIM_TRAP
+        if (dmem_write_ready && dmem_write_address == 32'h00014000) begin
             $display("========================================");
             $display(" ACCEL TEST RESULT: %d", dmem_write_data);
             $display("========================================");
@@ -297,26 +301,34 @@ module tb_pipeline;
     // end
 
     // 2. Track exactly where the CPU freezes
+    // 2. Track exactly where the CPU freezes
     always @(posedge clk) begin
         if (dmem_write_ready) begin
             
             // Did it successfully push the first pixel?
-            // (Notice the new address: 0x00020024)
-            if (dmem_write_address == 32'h00002024)
+            // (NEW ADDRESS: 0x00012024 for ACCEL_PIX_IN)
+            if (dmem_write_address == 32'h00012024)
                 $display("HEARTBEAT: CPU successfully pushed PIXEL to streaming accelerator...");
                 
             // Did it successfully trigger the UART?
-            // (Notice the new address: 0x00023000)
-            if (dmem_write_address == 32'h00005000) begin
+            // (NEW ADDRESS: 0x00015000 for UART_TX_DATA)
+            if (dmem_write_address == 32'h00015000) begin
                 $display("HEARTBEAT: UART Transmitting pixel %0d...", pixel_count);
             end
         end
     end
 
+    // Monitor the accelerator output calculation
+    // always @(posedge clk)
+    // if (dmem_read_address == 32'h00012028)
+    //     $display("[%0t] Accelerator true pixel: %0d  CPU sees: %0d",
+    //              $time, my_conv.final_pixel, my_conv.rdata);
+    
     always @(posedge clk)
-    if (dmem_read_address == 32'h00002028)
-        $display("[%0t] Accelerator true pixel: %0d  CPU sees: %0d",
-                 $time, stream_accel_5x5.final_pixel, stream_accel_5x5.rdata);
+    if (cnt%1000 == 0) begin
+        $display("%0d, %0d", dmem_write_data, dmem_read_data);
+        cnt = cnt + 1;
+    end
 
 
 endmodule

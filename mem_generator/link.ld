@@ -4,10 +4,11 @@ ENTRY(_start)
 
 MEMORY
 {
-  /* Instruction Memory: 4KB starting at 0x00000000 */
-  imem (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
-  /* Data Memory: 4KB. Mapped to 0x1000 so GCC doesn't overlap it with imem */
-  dmem (rwx) : ORIGIN = 0x00001000, LENGTH = 4K
+  /* Instruction Memory: 64KB */
+  imem (rx)  : ORIGIN = 0x00000000, LENGTH = 64K
+  
+  /* Data Memory: 64KB */
+  dmem (rwx) : ORIGIN = 0x00000000, LENGTH = 64K
 }
 
 SECTIONS
@@ -17,10 +18,15 @@ SECTIONS
     *(.text*)
   } > imem
 
-  .data : {
+  /* * THE FIX: AT(0x10000)
+   * We force the Load Memory Address (LMA) to offset by 64KB (0x10000).
+   * This stops the overlap error, but keeps the execution pointers (VMA) 
+   * starting at 0x00000000 inside the > dmem block. 
+   */
+  .data : AT(0x10000) {
     *(.data)
     *(.sdata)
-    *(.rodata)    /* <--- THIS MUST BE IN THE DMEM SECTION! */
+    *(.rodata)    /* Constant data like your image arrays go here */
     *(.srodata)
   } > dmem
   

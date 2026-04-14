@@ -8,8 +8,8 @@ COM_PORT = 'COM8'
 BAUD_RATE = 115200
 
 # Your C code generates a 160x120 image
-WIDTH = 64
-HEIGHT = 48
+WIDTH = 256
+HEIGHT = 192
 TOTAL_PIXELS = WIDTH * HEIGHT
 
 print(f"Listening on {COM_PORT} at {BAUD_RATE} baud...")

@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 
 module soc_interconnect (
-    input  wire        clk,    // NEW: Clock required for pipeline alignment
-    input  wire        reset,  // NEW: Reset
+    input  wire        clk,    // Clock required for pipeline alignment
+    input  wire        reset,  
 
     // CPU Interface
     input  wire [31:0] cpu_waddr,  
@@ -32,12 +32,18 @@ module soc_interconnect (
     // ==========================================
     wire [19:0] wbase_addr = cpu_waddr[31:12];
 
-    assign dmem_we     = (cpu_we && (wbase_addr == 20'h00001));
-    assign accel_we    = (cpu_we && (wbase_addr == 20'h00002));
-    assign led_we      = (cpu_we && (wbase_addr == 20'h00003));
-    assign sim_trap_we = (cpu_we && (wbase_addr == 20'h00004));
-    assign uart_we     = (cpu_we && (wbase_addr == 20'h00005));
-    assign vram_we     = (cpu_we && (wbase_addr >= 20'h00010 && wbase_addr <= 20'h00014));
+    // 1. DMEM owns the entire bottom 64KB (0x0000_0000 to 0x0000_FFFF)
+    assign dmem_we     = (cpu_we && (cpu_waddr < 32'h0001_0000));
+    
+    // 2. MMIO Peripherals safely pushed above the 64KB boundary
+    assign accel_we    = (cpu_we && (wbase_addr == 20'h00012)); // 0x0001_2000
+    assign led_we      = (cpu_we && (wbase_addr == 20'h00013)); // 0x0001_3000
+    assign sim_trap_we = (cpu_we && (wbase_addr == 20'h00014)); // 0x0001_4000
+    assign uart_we     = (cpu_we && (wbase_addr == 20'h00015)); // 0x0001_5000
+
+    // 3. VRAM gets a massive 64KB chunk to hold the 256x192 output image
+    // Covers 0x0003_0000 to 0x0003_FFFF
+    assign vram_we     = (cpu_we && (wbase_addr >= 20'h00030 && wbase_addr <= 20'h0003F));
 
     // ==========================================
     // READ LOGIC (Sequential - 1 Cycle Delay Alignment)
@@ -64,17 +70,21 @@ module soc_interconnect (
 
     // Multiplex the delayed data back to the CPU
     always @(*) begin
-        // CRITICAL: We switch based on the 1-cycle old address (rbase_addr_reg)!
-        case (rbase_addr_reg)
-            20'h00001: cpu_rdata = dmem_rdata; // DMEM has its own internal 1-cycle delay
-            20'h00002: cpu_rdata = accel_rdata_reg;
-            20'h00005: cpu_rdata = uart_rdata_reg;
-            default: begin
-                if (rbase_addr_reg >= 20'h00010 && rbase_addr_reg <= 20'h00014)
-                    cpu_rdata = {24'h000000, vram_rdata_reg}; 
-                else
-                    cpu_rdata = 32'h0000_0000;
-            end
-        endcase
+        // If the 1-cycle old address was in the bottom 64KB, return DMEM data
+        if (rbase_addr_reg < 20'h00010) begin
+            cpu_rdata = dmem_rdata;
+        end else begin
+            case (rbase_addr_reg)
+                20'h00012: cpu_rdata = accel_rdata_reg;
+                20'h00015: cpu_rdata = uart_rdata_reg;
+                default: begin
+                    // If in the VRAM range (0x0003_0000 to 0x0003_FFFF)
+                    if (rbase_addr_reg >= 20'h00030 && rbase_addr_reg <= 20'h0003F)
+                        cpu_rdata = {24'h000000, vram_rdata_reg}; 
+                    else
+                        cpu_rdata = 32'h0000_0000;
+                end
+            endcase
+        end
     end
 endmodule

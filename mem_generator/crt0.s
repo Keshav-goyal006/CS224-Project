@@ -4,7 +4,7 @@
 
 _start:
     /* Set stack pointer to the top of DMEM (0x1000 + 4096 = 0x2000) */
-    li sp, 0x2000
+    li sp, 0x00010000
     
     /* Jump to the main() function in code_vision.c */
     call main

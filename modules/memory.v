@@ -7,7 +7,7 @@ module instr_mem (
 	// 1024 words = 4 KB
 	// Declare instruction memory array (word-addressable, 4 KB total)
 	(* ram_style = "block" *)
-	reg [31:0] imem [0:1023];
+	reg [31:0] imem [0:16383]; // 64 KB total (16K words)
 
 	// FPGA ROM initialization
 	// Initialize instruction memory from hex file (simulation / FPGA)
@@ -18,7 +18,7 @@ module instr_mem (
 	// Synchronous instruction fetch
 	// Use word-aligned PC (pc[11:2]) to index memory
 	always @(posedge clk) begin
-    	instr <= imem[pc[11:2]];	// word address
+    	instr <= imem[pc[15:2]];	// word address
 	end
 
 endmodule
@@ -46,11 +46,10 @@ module data_mem (
 	// Declare data memory array (word-addressable, 4 KB total)
 	// TODO-DMEM-1: Declare dmem
     (* ram_style = "block" *)
-	(* dont_touch = "true" *)
-	reg [31:0] dmem [0:1023];
+	reg [31:0] dmem [0:16383];
 	// Decode byte address to word index
-	wire [9:0] rindex = raddr[11:2];
-	wire [9:0] windex = waddr[11:2];
+	wire [13:0] rindex = raddr[15:2];
+	wire [13:0] windex = waddr[15:2];
 
 	// Simulation / FPGA init
 	// TODO-DMEM-2: Initialize data memory from dmem.hex file

@@ -1,11 +1,27 @@
 #include <stdint.h>
 #include "image_data.h"
 
-// 4KB Memory Map Addresses
-volatile uint32_t* const ACCEL_PIX_IN  = (uint32_t*)0x00002024; 
-volatile uint32_t* const ACCEL_MAC_OUT = (uint32_t*)0x00002028; 
-volatile uint32_t* const UART_TX_DATA  = (uint32_t*)0x00005000;
-volatile uint32_t* const UART_TX_STAT  = (uint32_t*)0x00005004;
+// ---------------------------------------------------------
+// NEW 64KB Memory Map Addresses
+// ---------------------------------------------------------
+// Accelerator Base is 0x00012000
+volatile uint32_t* const ACCEL_PIX_IN  = (uint32_t*)0x00012024; 
+// volatile uint32_t* const ACCEL_TEMP = (uint32_t*)0x00012028; 
+volatile uint32_t* const ACCEL_MAC_OUT = (uint32_t*)0x00012028;
+
+// UART Base is 0x00015000
+volatile uint32_t* const UART_TX_DATA  = (uint32_t*)0x00015000;
+volatile uint32_t* const UART_TX_STAT  = (uint32_t*)0x00015004;
+
+// ---------------------------------------------------------
+// 256x192 Image Constants
+// ---------------------------------------------------------
+#define TOTAL_PIXELS 49152
+
+// For a 5x5 kernel, warmup is usually 2 full rows + 2 pixels
+// (2 * 256) + 2 = 514 pixels. 
+// Adjust this if your line buffer architecture differs!
+#define WARMUP_PIXELS 1028 
 
 int main() {
     register int i asm("s1");
@@ -15,10 +31,8 @@ int main() {
     // This prevents the CPU from trying to execute a faulty 'lbu' byte-load
     uint32_t* words_array = (uint32_t*)image_pixels;
 
-    // ... setup and pointers ...
-
-    // PHASE 1: WARM UP (258 Pixels for 5x5)
-    for (i = 0; i < 258; i++) {
+    // PHASE 1: WARM UP 
+    for (i = 0; i < WARMUP_PIXELS; i++) {
         int word_index = i >> 2; 
         int byte_offset = i & 3; 
         uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
@@ -28,7 +42,7 @@ int main() {
     }
 
     // PHASE 2: VALID IMAGE 
-    for (i = 258; i < 3072; i++) {
+    for (i = WARMUP_PIXELS; i < TOTAL_PIXELS; i++) {
         int word_index = i >> 2; 
         int byte_offset = i & 3; 
         uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
@@ -42,8 +56,8 @@ int main() {
         *UART_TX_DATA = final_pixel;
     }
 
-    // PHASE 3: FLUSH REMAINDER (258 Dummy Pixels)
-    for (i = 0; i < 258; i++) {
+    // PHASE 3: FLUSH REMAINDER 
+    for (i = 0; i < WARMUP_PIXELS; i++) {
         *ACCEL_PIX_IN = 0; 
         asm volatile("nop"); asm volatile("nop"); asm volatile("nop");
 

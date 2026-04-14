@@ -1,7 +1,9 @@
 `timescale 1ns / 1ps
 
 module stream_accel_5x5 #(
-    parameter IMG_WIDTH = 64
+    parameter IMG_WIDTH = 256
+    // parameter wad = 32'h00012024;
+    // parameter rad = 32'h00012028;
 )(
     input  wire clk,
     input  wire reset,
@@ -28,7 +30,7 @@ module stream_accel_5x5 #(
     // 2. The 4 Line Buffers
     // --------------------------------------------------------
     wire [7:0] row3_pixel, row2_pixel, row1_pixel, row0_pixel;
-    wire pixel_push = we && (waddr == 32'h00002024);
+    wire pixel_push = we && (waddr == 32'h00012024);
 
     line_buffer #(.WIDTH(IMG_WIDTH)) LB1 (.clk(clk), .reset(reset), .en(pixel_push), .din(wdata[7:0]),  .dout(row3_pixel));
     line_buffer #(.WIDTH(IMG_WIDTH)) LB2 (.clk(clk), .reset(reset), .en(pixel_push), .din(row3_pixel),  .dout(row2_pixel));
@@ -183,8 +185,124 @@ module stream_accel_5x5 #(
     end
 
     always @(*) begin
-        if (raddr == 32'h00002028) rdata = final_pixel_reg; 
+        if (raddr == 32'h00012028) rdata = final_pixel_reg; 
         else rdata = 32'h00000000;
     end
 
 endmodule
+
+
+// `timescale 1ns / 1ps
+
+// module stream_accel_5x5 #(
+//     parameter IMG_WIDTH = 256
+// )(
+//     input  wire clk,
+//     input  wire reset,
+//     input  wire [3:0] switches,
+
+//     // CPU Interface
+//     input  wire        we,
+//     input  wire [31:0] waddr,
+//     input  wire [31:0] wdata,
+//     input  wire [31:0] raddr,
+//     output reg  [31:0] rdata
+// );
+
+//     // =========================================================
+//     // 1. CPU WRITE → STREAM INPUT
+//     // =========================================================
+//     wire pixel_push;
+//     assign pixel_push = we && (waddr == 32'h00012024);
+
+//     wire [7:0] pixel_in;
+//     assign pixel_in = wdata[7:0];
+
+//     // =========================================================
+//     // 2. INTERMEDIATE WIRES
+//     // =========================================================
+//     wire [7:0] stage1_out;
+//     wire       stage1_valid;
+
+//     wire [7:0] stage2_out;
+//     wire       stage2_valid;
+
+//     wire [7:0] stage3_out;
+//     wire       stage3_valid;
+
+//     // =========================================================
+//     // 3. FIRST 5x5 CORE
+//     // =========================================================
+//     stream_accel_5x5_core #(
+//         .IMG_WIDTH(IMG_WIDTH)
+//     ) u_core1 (
+//         .clk(clk),
+//         .reset(reset),
+
+//         .pixel_in(pixel_in),
+//         .pixel_valid(pixel_push),
+
+//         .switches(switches),
+
+//         .pixel_out(stage1_out),
+//         .pixel_valid_out(stage1_valid)
+//     );
+
+//     // =========================================================
+//     // 4. SECOND 5x5 CORE
+//     // =========================================================
+//     stream_accel_5x5_core #(
+//         .IMG_WIDTH(IMG_WIDTH)
+//     ) u_core2 (
+//         .clk(clk),
+//         .reset(reset),
+
+//         .pixel_in(stage1_out),
+//         .pixel_valid(stage1_valid),
+
+//         .switches(switches),
+
+//         .pixel_out(stage2_out),
+//         .pixel_valid_out(stage2_valid)
+//     );
+
+//     stream_accel_5x5_core #(
+//         .IMG_WIDTH(IMG_WIDTH)
+//     ) u_core3 (
+//         .clk(clk),
+//         .reset(reset),
+
+//         .pixel_in(stage2_out),
+//         .pixel_valid(stage2_valid),
+
+//         .switches(switches),
+
+//         .pixel_out(stage3_out),
+//         .pixel_valid_out(stage3_valid)
+//     );
+
+//      // =========================================================
+
+//     // =========================================================
+//     // 5. OUTPUT REGISTER (FINAL STAGE)
+//     // =========================================================
+//     reg [7:0] final_pixel_reg;
+
+//     always @(posedge clk) begin
+//         if (!reset)
+//             final_pixel_reg <= 8'd0;
+//         else if (stage2_valid)
+//             final_pixel_reg <= stage3_out;
+//     end
+
+//     // =========================================================
+//     // 6. CPU READ INTERFACE
+//     // =========================================================
+//     always @(*) begin
+//         if (raddr == 32'h00012028)
+//             rdata = {24'd0, final_pixel_reg};
+//         else
+//             rdata = 32'd0;
+//     end
+
+// endmodule
