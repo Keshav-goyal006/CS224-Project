@@ -63,11 +63,19 @@ module stream_accel_5x5_rgb #(
     reg [4:0] shift_val;
     reg abs_val_enable;
 
+    // New variables for Morphological Math
+    reg [7:0] morph_R, morph_G, morph_B;
+
     always @(*) begin
         // Default clear
         for (r=0; r<5; r=r+1) for (c=0; c<5; c=c+1) weights[r][c] = 0;
         shift_val = 0;
         abs_val_enable = 0;
+
+        // Default Morph values (start with center pixel)
+        morph_R = window[2][2][23:16];
+        morph_G = window[2][2][15:8];
+        morph_B = window[2][2][7:0];
 
         case(switches)
             4'b0001: begin // 5x5 GAUSSIAN BLUR
@@ -143,6 +151,16 @@ module stream_accel_5x5_rgb #(
                 shift_val = 4; 
                 abs_val_enable = 0;
             end
+            4'b1000: begin
+                for (r=0; r<5; r=r+1) begin
+                    for (c=0; c<5; c=c+1) begin
+                        // If any neighbor is darker than our current min, update the min
+                        if (window[r][c][23:16] < morph_R) morph_R = window[r][c][23:16];
+                        if (window[r][c][15:8]  < morph_G) morph_G = window[r][c][15:8];
+                        if (window[r][c][7:0]   < morph_B) morph_B = window[r][c][7:0];
+                    end
+                end
+            end
             default: begin // IDENTITY (Pass-through)
                 weights[2][2] = 1;
             end
@@ -180,8 +198,15 @@ module stream_accel_5x5_rgb #(
     wire [7:0] final_G = (abs_G < 0) ? 8'd0 : (abs_G > 255) ? 8'd255 : abs_G[7:0];
     wire [7:0] final_B = (abs_B < 0) ? 8'd0 : (abs_B > 255) ? 8'd255 : abs_B[7:0];
 
+    // Decide which math engine to use based on the switches
+    wire [7:0] out_R = (switches >= 4'b1000) ? morph_R : final_R;
+    wire [7:0] out_G = (switches >= 4'b1000) ? morph_G : final_G;
+    wire [7:0] out_B = (switches >= 4'b1000) ? morph_B : final_B;
+
+    wire [31:0] final_pixel = {8'h00, out_R, out_G, out_B};
+
     // Recombine into 32-bit word
-    wire [31:0] final_pixel = {8'h00, final_R, final_G, final_B};
+    // wire [31:0] final_pixel = {8'h00, final_R, final_G, final_B};
 
     // --------------------------------------------------------
     // 5. CPU Read Interface (1-Cycle Pipeline Sync)
