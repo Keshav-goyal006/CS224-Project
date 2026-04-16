@@ -4,12 +4,24 @@
     
     <AddressSpace Name="IMEM" Begin="0" End="4095">
       <BusBlock>
-        <BitLane MemType="RAMB32" Placement="X0Y2"> <DataWidth MSB="31" LSB="0"/>
+        <BitLane MemType="RAMB32" Placement="X0Y5"> 
+          <DataWidth MSB="31" LSB="0"/>
           <AddressRange Begin="0" End="1023"/>
           <Parity ON="false" NumBits="0"/>
         </BitLane>
       </BusBlock>
     </AddressSpace>
+
+    <AddressSpace Name="DMEM" Begin="4096" End="8191">
+      <BusBlock>
+        <BitLane MemType="RAMB32" Placement="X1Y5"> 
+          <DataWidth MSB="31" LSB="0"/>
+          <AddressRange Begin="0" End="1023"/>
+          <Parity ON="false" NumBits="0"/>
+        </BitLane>
+      </BusBlock>
+    </AddressSpace>
+
   </Processor>
   <Config>
     <Option Name="Part" Val="xc7a100tcsg324-1"/> 
