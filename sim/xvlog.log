@@ -1,0 +1,36 @@
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/IF_ID.v" into library work
+INFO: [VRFC 10-311] analyzing module IF_ID
+INFO: [VRFC 10-311] analyzing module id_ex_reg
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/execute.v" into library work
+INFO: [VRFC 10-311] analyzing module execute
+INFO: [VRFC 10-311] analyzing module ex_mem_wb_reg
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/wb.v" into library work
+INFO: [VRFC 10-311] analyzing module wb
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/memory.v" into library work
+INFO: [VRFC 10-311] analyzing module instr_mem
+INFO: [VRFC 10-311] analyzing module data_mem
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/conv_accelerator.v" into library work
+INFO: [VRFC 10-311] analyzing module conv_accelerator
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/vga_controller.v" into library work
+INFO: [VRFC 10-311] analyzing module vga_controller
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/pipeline.v" into library work
+INFO: [VRFC 10-311] analyzing module pipe
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/tb_pipeline.v" into library work
+INFO: [VRFC 10-311] analyzing module tb_pipeline
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/tb_bootloader.v" into library work
+INFO: [VRFC 10-311] analyzing module tb_bootloader
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/tb_pipeline_bootloader.v" into library work
+INFO: [VRFC 10-311] analyzing module tb_pipeline_bootloader
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/uart_tx.v" into library work
+INFO: [VRFC 10-311] analyzing module uart_tx
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/soc_interconnect.v" into library work
+INFO: [VRFC 10-311] analyzing module soc_interconnect
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/vga_controller.v" into library work
+INFO: [VRFC 10-311] analyzing module vga_controller
+WARNING: [VRFC 10-3609] overwriting previous definition of module 'vga_controller' [D:/New/CS224/CS224-Project/modules/vga_controller.v:3]
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/stream_accel.v" into library work
+INFO: [VRFC 10-311] analyzing module stream_accel
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/line_buffer.v" into library work
+INFO: [VRFC 10-311] analyzing module line_buffer
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/New/CS224/CS224-Project/modules/stream_accel_5x5.v" into library work
+INFO: [VRFC 10-311] analyzing module stream_accel_5x5

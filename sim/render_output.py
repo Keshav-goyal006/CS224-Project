@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 from PIL import Image
 
@@ -31,16 +33,18 @@ def render_hardware_image(txt_filename, output_filename, width, height, scale_fa
         final_img.save(output_filename)
         
         print(f"Success! Hardware accelerated image saved to: {output_filename}")
-        
-        # Optional: Show the image on screen
-        final_img.show()
 
     except FileNotFoundError:
         print(f"Error: '{txt_filename}' not found.")
         print("Make sure you run the Vivado simulation first!")
 
 if __name__ == "__main__":
-    # Ensure these match the exact size you set in your C-code!
-    # If you used the 4KB memory trick, set this to width=64, height=48
-    render_hardware_image('simulated_pixels.txt', 'final_output.png', width=64, height=48)
-    render_hardware_image('original_image.txt', 'original_input.jpg', width=64, height=48)
+    parser = argparse.ArgumentParser(description="Render a grayscale pixel text file into an image.")
+    parser.add_argument("input", nargs="?", default="simulated_pixels.txt")
+    parser.add_argument("output", nargs="?", default="final_output.png")
+    parser.add_argument("--width", type=int, default=64)
+    parser.add_argument("--height", type=int, default=48)
+    parser.add_argument("--scale", type=int, default=1)
+    args = parser.parse_args()
+
+    render_hardware_image(args.input, args.output, width=args.width, height=args.height, scale_factor=args.scale)

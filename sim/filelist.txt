@@ -6,6 +6,8 @@
 ../modules/vga_controller.v
 ../modules/pipeline.v
 ../modules/tb_pipeline.v
+../modules/tb_bootloader.v
+../modules/tb_pipeline_bootloader.v
 ../modules/uart_tx.v
 ../modules/soc_interconnect.v
 ../modules/vga_controller.v

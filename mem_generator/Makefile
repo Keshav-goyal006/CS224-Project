@@ -19,8 +19,9 @@ SRC_SORT         = code_sort.c
 SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
-SRC_VISION       = code_vision.c      # <--- NEW: Added vision source
-# SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
+SRC_BOOTLOADER   = bootloader.c
+SRC_VISION       = code_vision_5x5.c  # 5x5 vision source for stream_accel_5x5
+# SRC_VISION       = code_vision.c      # 3x3 vision source for stream_accel
 
 PATCH_BIT      ?= 0
 MEMORY_MAP_DIR ?= memory-map
@@ -78,9 +79,9 @@ xor: $(SRC_XOR)
 # 	cd imem_dmem && python bin2hex.py
 
 vision: $(SRC_VISION)
-	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.S $(SRC_VISION) -o vision.elf
+	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.s $(SRC_BOOTLOADER) $(SRC_VISION) -o vision.elf
 	
-	# Extract exactly the instructions for IMEM
+	# Extract the full instruction image for IMEM
 	$(OBJCOPY) -O binary -j .text -j .text.init vision.elf ./imem_dmem/imem.bin
 	
 	# Extract ALL initialized data for DMEM

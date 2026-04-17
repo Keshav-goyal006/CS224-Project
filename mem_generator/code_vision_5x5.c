@@ -5,20 +5,15 @@ volatile uint32_t* const ACCEL_PIX_IN  = (uint32_t*)0x00002024;
 volatile uint32_t* const ACCEL_MAC_OUT = (uint32_t*)0x00002028; 
 volatile uint32_t* const UART_TX_DATA  = (uint32_t*)0x00005000;
 volatile uint32_t* const UART_TX_STAT  = (uint32_t*)0x00005004;
+volatile uint8_t* const image_pixels   = (volatile uint8_t*)0x00001000;
 
 int main() {
     register int i asm("s1");
     register uint32_t final_pixel asm("s4");
     
-    // THE BYPASS: Point directly to the start of DMEM (0x00001000).
-    // The UART Bootloader just finished loading our 4KB image exactly here!
-    uint32_t* words_array = (uint32_t*)0x00001400;
-
     // PHASE 1: WARM UP (258 Pixels for 5x5)
     for (i = 0; i < 258; i++) {
-        int word_index = i >> 2; 
-        int byte_offset = i & 3; 
-        uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
+        uint32_t pixel_val = image_pixels[i];
         
         *ACCEL_PIX_IN = pixel_val;
         asm volatile("nop"); asm volatile("nop"); asm volatile("nop");
@@ -26,9 +21,7 @@ int main() {
 
     // PHASE 2: VALID IMAGE 
     for (i = 258; i < 3072; i++) {
-        int word_index = i >> 2; 
-        int byte_offset = i & 3; 
-        uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
+        uint32_t pixel_val = image_pixels[i];
         
         *ACCEL_PIX_IN = pixel_val;
         asm volatile("nop"); asm volatile("nop"); asm volatile("nop");

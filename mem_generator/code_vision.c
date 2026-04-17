@@ -1,11 +1,11 @@
 #include <stdint.h>
-#include "image_data.h" // Includes our 19,200 pixel array!
 
 volatile int32_t* const ACCEL_WEIGHTS = (int32_t*)0x00002000;
 volatile int32_t* const ACCEL_PIXELS  = (int32_t*)0x00002040;
 volatile int32_t* const ACCEL_RESULT  = (int32_t*)0x00002080;
 volatile int32_t* const UART_TX_DATA  = (int32_t*)0x00005000;
 volatile int32_t* const UART_TX_STAT  = (int32_t*)0x00005004;
+volatile uint8_t* const image_pixels  = (volatile uint8_t*)0x00001000;
 
 // CHOOSE YOUR KERNEL HERE
 int32_t current_kernel[9] = {1,1,1,1,1,1,1,1,1};

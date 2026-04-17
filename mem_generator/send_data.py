@@ -48,7 +48,7 @@ def send_file(com_port, file_path, baud_rate=115200):
             with open(file_path, 'rb') as f:
                 data = f.read()
 
-        # 2. Match the current bootloader payload: 0x1400..0x1fff.
+        # 2. Match the current bootloader payload: 0x1000..0x1bff.
         RAMSIZE = 3072
         if len(data) < RAMSIZE:
             print(f"Padding file from {len(data)} bytes to {RAMSIZE} bytes with zeros...")

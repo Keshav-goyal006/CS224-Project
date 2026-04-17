@@ -36,7 +36,7 @@ def run_convolution(com_port, input_file, output_file, baud_rate=115200):
             with open(input_file, 'rb') as f:
                 data = f.read()
 
-        # The current bootloader fills 0x1400..0x1fff, the 3072-byte image area.
+        # The current bootloader fills 0x1000..0x1bff, the 3072-byte image area.
         RAMSIZE = 3072
         if len(data) < RAMSIZE:
             data += b'\x00' * (RAMSIZE - len(data))
