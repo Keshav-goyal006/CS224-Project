@@ -25,7 +25,7 @@ module tb_pipeline;
     // ADD THIS: Define switches and select a kernel
     reg [3:0] sw;
     initial begin
-        sw = 4'b0111; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
+        sw = 4'b0010; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
     end
 
 
@@ -108,7 +108,9 @@ module tb_pipeline;
         // UPDATED: The new split UART interfaces
         .tx_active  (tx_active),
         .rx_data_in (8'h00), // Dummy 0 for simulation
-        .rx_valid_in(1'b0)   // Dummy 0 for simulation
+        .rx_valid_in(1'b0),   // Dummy 0 for simulation
+        .warm_reset_pending(1'b0),
+        .warm_reset_clear()
     );
 
     // =================================================================

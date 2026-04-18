@@ -32,6 +32,7 @@ sort addition negative fibonacci xor vision:
 
 	# 4. Render the testbench output into an image
 	python render_output.py simulated_pixels.txt final_output.png --width 64 --height 48 --scale 4
+	python render_output.py simulated_pixels_warm.txt final_output_warm.png --width 64 --height 48 --scale 4
 
 bootloader:
 	# 1. Generate Hex Files for the integrated bootloader + pipeline build

@@ -90,9 +90,9 @@ vision: $(SRC_VISION)
 	$(OBJDUMP) -d vision.elf > ./imem_dmem/code.dis
 	cd imem_dmem && python bin2hex.py
 	
-	if [ "$(PATCH_BIT)" = "0" ]; then \
-		$(MAKE) -C $(MEMORY_MAP_DIR) flash_fast BIT_IN="$(BIT_IN)" BIT_OUT="$(BIT_OUT)"; \
-	fi
+# 	if [ "$(PATCH_BIT)" = "" ]; then \
+# 		$(MAKE) -C $(MEMORY_MAP_DIR) flash_fast BIT_IN="$(BIT_IN)" BIT_OUT="$(BIT_OUT)"; \
+# 	fi
 
 # /////clean function
 clean:

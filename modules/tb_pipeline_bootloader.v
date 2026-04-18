@@ -2,11 +2,15 @@
 
 module tb_pipeline_bootloader;
 
+    localparam [3:0] FILTER_FIRST  = 4'b0010; // Edge Detect
+    localparam [3:0] FILTER_SECOND = 4'b0100; // Sharpen
+
     reg clk;
     reg reset;
     reg [15:0] sw;
     reg [7:0] rx_data_in;
     reg rx_valid_in;
+    reg warm_reset_pending;
 
     wire [31:0] inst_mem_read_data;
     wire [31:0] dmem_read_data;
@@ -28,6 +32,7 @@ module tb_pipeline_bootloader;
     wire [31:0] accel_rdata;
     wire        tx_active;
     wire        uart_txd;
+    wire        warm_reset_clear;
 
     pipe pipe_u (
         .clk                (clk),
@@ -71,6 +76,8 @@ module tb_pipeline_bootloader;
         .tx_active   (tx_active),
         .rx_data_in  (rx_data_in),
         .rx_valid_in (rx_valid_in),
+        .warm_reset_pending(warm_reset_pending),
+        .warm_reset_clear(warm_reset_clear),
         .sw_in       (sw)
     );
 
@@ -118,11 +125,20 @@ module tb_pipeline_bootloader;
 
     integer cycle_count;
     integer i;
-    integer output_count;
-    integer file_out;
+    integer first_output_count;
+    integer second_output_count;
+    integer output_phase;
+    integer first_file;
+    integer second_file;
     integer image_file;
     integer scan_result;
     reg [7:0] input_image [0:3071];
+
+    always @(posedge clk) begin
+        if (warm_reset_clear) begin
+            warm_reset_pending = 1'b0;
+        end
+    end
 
     always @(posedge clk) begin
         cycle_count <= cycle_count + 1;
@@ -134,17 +150,31 @@ module tb_pipeline_bootloader;
 
     always @(posedge clk) begin
         if (dmem_write_ready && dmem_write_address == 32'h00005000 && cycle_count > 0) begin
-            $fdisplay(file_out, "%0d", dmem_write_data[7:0]);
-            output_count = output_count + 1;
+            if (output_phase == 0) begin
+                $fdisplay(first_file, "%0d", dmem_write_data[7:0]);
+                first_output_count = first_output_count + 1;
 
-            if (output_count % 256 == 0) begin
-                $display("Pipeline output progress: %0d / 3072 bytes", output_count);
-            end
+                if (first_output_count % 256 == 0) begin
+                    $display("Run 1 progress: %0d / 3072 bytes", first_output_count);
+                end
 
-            if (output_count == 3072) begin
-                $fclose(file_out);
-                $display("PASS: bootloader loaded the image, SW[15] went low, and the pipeline returned 3072 output bytes.");
-                $finish;
+                if (first_output_count == 3072) begin
+                    $display("PASS: first filter finished. Ready for warm reset and second filter.");
+                end
+            end else begin
+                $fdisplay(second_file, "%0d", dmem_write_data[7:0]);
+                second_output_count = second_output_count + 1;
+
+                if (second_output_count % 256 == 0) begin
+                    $display("Run 2 progress: %0d / 3072 bytes", second_output_count);
+                end
+
+                if (second_output_count == 3072) begin
+                    $fclose(first_file);
+                    $fclose(second_file);
+                    $display("PASS: bootloader loaded the image once, warm reset preserved DMEM, and two filters completed.");
+                    $finish;
+                end
             end
         end
     end
@@ -162,15 +192,24 @@ module tb_pipeline_bootloader;
 
     initial begin
         reset = 1'b0;
-        sw = 16'h8003;
+        sw = {1'b1, 11'b0, FILTER_FIRST};
         rx_data_in = 8'h00;
         rx_valid_in = 1'b0;
+        warm_reset_pending = 1'b0;
         cycle_count = 0;
-        output_count = 0;
+        first_output_count = 0;
+        second_output_count = 0;
+        output_phase = 0;
 
-        file_out = $fopen("simulated_pixels.txt", "w");
-        if (file_out == 0) begin
+        first_file = $fopen("simulated_pixels.txt", "w");
+        if (first_file == 0) begin
             $display("FAIL: could not open simulated_pixels.txt for writing.");
+            $finish;
+        end
+
+        second_file = $fopen("simulated_pixels_warm.txt", "w");
+        if (second_file == 0) begin
+            $display("FAIL: could not open simulated_pixels_warm.txt for writing.");
             $finish;
         end
 
@@ -205,6 +244,24 @@ module tb_pipeline_bootloader;
         repeat (10) @(negedge clk);
         sw[15] = 1'b0;
         $display("SW[15] is now low; pipeline should start processing the loaded image.");
+
+        wait (first_output_count == 3072);
+
+        repeat (20) @(negedge clk);
+        output_phase = 1;
+        sw[3:0] = FILTER_SECOND;
+        sw[15] = 1'b1;
+        warm_reset_pending = 1'b1;
+
+        $display("Triggering warm reset for the second filter run...");
+
+        repeat (10) @(negedge clk);
+        reset = 1'b0;
+        repeat (10) @(negedge clk);
+        reset = 1'b1;
+
+        wait (warm_reset_pending == 1'b0);
+        $display("Warm reset acknowledged; second filter run should begin now.");
     end
 
 endmodule

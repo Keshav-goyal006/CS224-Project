@@ -2,6 +2,12 @@ import serial
 import numpy as np
 import matplotlib.pyplot as plt
 
+if not hasattr(serial, "Serial"):
+    raise SystemExit(
+        "PySerial is not the serial module being imported. Remove the 'serial' package and reinstall pyserial: "
+        "py -m pip uninstall -y serial && py -m pip install --force-reinstall pyserial"
+    )
+
 # --- CONFIGURATION ---
 # Change this to match your Device Manager / Terminal!
 COM_PORT = 'COM8' 

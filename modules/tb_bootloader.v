@@ -7,6 +7,7 @@ module tb_bootloader;
     reg [15:0] sw_in;
     reg [7:0] rx_data_in;
     reg rx_valid_in;
+    reg warm_reset_pending;
 
     wire [31:0] inst_mem_read_data;
     wire [31:0] dmem_read_data;
@@ -26,6 +27,7 @@ module tb_bootloader;
     wire        led_we;
     wire        uart_we;
     wire        sim_trap_we;
+    wire        warm_reset_clear;
 
     pipe pipe_u (
         .clk                (clk),
@@ -69,6 +71,8 @@ module tb_bootloader;
         .tx_active   (1'b0),
         .rx_data_in  (rx_data_in),
         .rx_valid_in (rx_valid_in),
+        .warm_reset_pending(warm_reset_pending),
+        .warm_reset_clear(warm_reset_clear),
         .sw_in       (sw_in)
     );
 
@@ -130,6 +134,7 @@ module tb_bootloader;
         sw_in = 16'h8000;
         rx_data_in = 8'h00;
         rx_valid_in = 1'b0;
+        warm_reset_pending = 1'b0;
         cycle_count = 0;
 
         repeat (10) @(negedge clk);
@@ -163,7 +168,30 @@ module tb_bootloader;
             end
         end
 
+        $display("Starting warm-reset check...\n");
+        warm_reset_pending = 1'b1;
+        reset = 1'b0;
+        repeat (10) @(negedge clk);
+        reset = 1'b1;
+        repeat (20) @(negedge clk);
+
+        for (word_index = 0; word_index < 768; word_index = word_index + 1) begin
+            expected_word = {
+                expected_bytes[word_index * 4 + 3],
+                expected_bytes[word_index * 4 + 2],
+                expected_bytes[word_index * 4 + 1],
+                expected_bytes[word_index * 4 + 0]
+            };
+
+            if (DMEM.dmem[word_index] !== expected_word) begin
+                $display("FAIL: Warm reset corrupted DMEM at word %0d. Got %08x expected %08x",
+                    word_index, DMEM.dmem[word_index], expected_word);
+                $finish;
+            end
+        end
+
         $display("PASS: Bootloader stored all 3072 bytes at 0x1000 correctly.");
+        $display("PASS: Warm reset preserved the UART-loaded image in DMEM.");
         $finish;
     end
 

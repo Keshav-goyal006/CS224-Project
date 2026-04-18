@@ -29,6 +29,8 @@ module soc_interconnect (
     input  wire        tx_active,
     input  wire [7:0]  rx_data_in,
     input  wire        rx_valid_in,
+    input  wire        warm_reset_pending,
+    output wire        warm_reset_clear,
 
     input  wire [15:0] sw_in
 );
@@ -42,6 +44,7 @@ module soc_interconnect (
     assign led_we      = (cpu_we && (wbase_addr == 20'h00003));
     assign sim_trap_we = (cpu_we && (wbase_addr == 20'h00004));
     assign uart_we     = (cpu_we && (wbase_addr == 20'h00005));
+    assign warm_reset_clear = (cpu_we && (wbase_addr == 20'h00006) && cpu_waddr[15:0] == 16'h6014);
     assign vram_we     = (cpu_we && (wbase_addr >= 20'h00010 && wbase_addr <= 20'h00014));
 
     // ==========================================
@@ -102,7 +105,14 @@ module soc_interconnect (
                 else    cpu_rdata = 32'd0;
             end
 
-            20'h00006: cpu_rdata = {16'h0000, sw_reg}; // SW input at 0x00006000 - 0x00006FFF
+            20'h00006: begin
+                if (raddr_lower_reg == 16'h6010)
+                    cpu_rdata = {31'd0, warm_reset_pending};
+                else if (raddr_lower_reg == 16'h6014)
+                    cpu_rdata = 32'd0;
+                else
+                    cpu_rdata = {16'h0000, sw_reg}; // SW input at 0x00006000 - 0x00006FFF
+            end
             
             default: begin
                 if (rbase_addr_reg >= 20'h00010 && rbase_addr_reg <= 20'h00014)

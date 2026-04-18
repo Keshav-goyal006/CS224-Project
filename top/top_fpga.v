@@ -6,6 +6,7 @@ module top_fpga #(
 )(
     input  wire clk,        // fast board clock (100 MHz)
     input  wire reset,      // active-low reset
+    input  wire warm_reset_btn,
     input  wire [15:0] sw,
     output wire [15:0] led,
     
@@ -25,11 +26,34 @@ module top_fpga #(
     // 100 MHz -> 25 MHz Clock Divider (Required for standard 640x480 VGA)
     // -----------------------------------------------------------------
     reg [1:0] clk_div;
+    reg warm_reset_sync_1;
+    reg warm_reset_sync_2;
+    reg warm_reset_sync_3;
+    reg warm_reset_pending;
     always @(posedge clk or negedge reset) begin
         if (!reset) clk_div <= 2'b00;
         else clk_div <= clk_div + 1'b1;
     end
     wire clk_25MHz = clk_div[1];
+    wire core_reset = reset & ~warm_reset_sync_2;
+
+    always @(posedge clk_25MHz or negedge reset) begin
+        if (!reset) begin
+            warm_reset_sync_1 <= 1'b0;
+            warm_reset_sync_2 <= 1'b0;
+            warm_reset_sync_3 <= 1'b0;
+            warm_reset_pending <= 1'b0;
+        end else begin
+            warm_reset_sync_1 <= warm_reset_btn;
+            warm_reset_sync_2 <= warm_reset_sync_1;
+            warm_reset_sync_3 <= warm_reset_sync_2;
+            if (warm_reset_sync_2 && !warm_reset_sync_3) begin
+                warm_reset_pending <= 1'b1;
+            end else if (warm_reset_clear) begin
+                warm_reset_pending <= 1'b0;
+            end
+        end
+    end
 
     // -----------------------------------------------------------------
     // CPU ↔ MEMORY WIRES
@@ -56,7 +80,7 @@ module top_fpga #(
     // -----------------------------------------------------------------
     pipe pipe_u (
         .clk                 (clk_25MHz),
-        .reset               (reset),
+        .reset               (core_reset),
         .stall               (1'b0),
         .exception           (exception),
         .pc_out              (pc_out_w),
@@ -96,13 +120,14 @@ module top_fpga #(
     // SOC INTERCONNECT (The Traffic Cop)
     // -----------------------------------------------------------------
     wire dmem_we_actual, accel_we, vram_we, uart_we, led_we, sim_trap_we;
+    wire warm_reset_clear;
     wire [31:0] accel_rdata;
     wire tx_active;
     wire [7:0] vga_pixel_data;
 
     soc_interconnect bus (
         .clk        (clk_25MHz),          
-        .reset      (reset),              
+        .reset      (core_reset),              
         
         // CPU Master Ports
         .cpu_waddr  (dmem_write_address), 
@@ -129,6 +154,8 @@ module top_fpga #(
         .tx_active  (tx_active),
         .rx_data_in (uart_byte),
         .rx_valid_in(uart_done),
+        .warm_reset_pending(warm_reset_pending),
+        .warm_reset_clear(warm_reset_clear),
 
         .sw_in      (sw)
     );
@@ -153,8 +180,8 @@ module top_fpga #(
     
     // LED Register Logic
     reg [15:0] led_reg;
-    always @(posedge clk_25MHz or negedge reset) begin
-        if (!reset) led_reg <= 16'b0;
+    always @(posedge clk_25MHz or negedge core_reset) begin
+        if (!core_reset) led_reg <= 16'b0;
         else if (led_we) led_reg <= dmem_write_data[15:0];
     end
     assign led = led_reg;
@@ -162,7 +189,7 @@ module top_fpga #(
     // Convolution Accelerator
     stream_accel_5x5 #(.IMG_WIDTH(64)) my_conv (
         .clk      (clk_25MHz),         
-        .reset    (reset),
+        .reset    (core_reset),
         .switches (sw),          
         .we       (accel_we),
         .waddr    (dmem_write_address),
@@ -174,7 +201,7 @@ module top_fpga #(
     // UART Transmitter (Talks to the PC)
     uart_tx #( .CLKS_PER_BIT(217) ) uart_tx_inst (
         .clk        (clk_25MHz), 
-        .reset      (reset),
+        .reset      (core_reset),
         .tx_start   (uart_we), 
         .tx_data    (dmem_write_data[7:0]),
         .tx_active  (tx_active),
@@ -208,7 +235,7 @@ module top_fpga #(
 
     vga_controller VGA_CTRL (
         .clk_25MHz (clk_25MHz),
-        .reset     (reset),
+        .reset     (core_reset),
         .hsync     (vga_hs),
         .vsync     (vga_vs),
         .video_on  (video_on),
