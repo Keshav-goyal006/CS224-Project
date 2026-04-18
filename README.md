@@ -11,7 +11,7 @@ The project supports both:
 - CPU: RV32IM-style pipeline with instruction and data memory
 - Interconnect: Memory-mapped SoC decode for DMEM, accelerator, LED, UART, VRAM, and control/status
 - Boot flow: UART-based image loader before application execution
-- Acceleration: Streaming convolution blocks (5x5 and 9x9 variants in repository)
+- Acceleration: Streaming convolution blocks (5x5 RGB active flow, plus 5x5/9x9 variants in repository)
 - Display/IO: VGA pipeline, UART RX/TX, switches, LEDs
 
 ## Repository Layout
@@ -114,7 +114,7 @@ Optional image rendering from simulation outputs:
 
 ```bash
 cd sim
-py render_output.py
+py rgb_img.py
 ```
 
 ### 2) Firmware Image Generation Only
@@ -140,31 +140,42 @@ Generated files are placed under `mem_generator/imem_dmem/`:
 
 ### 4) Hardware Runtime Sequence (Bootloader + UART)
 1. Set `SW[15]` high (bootloader load mode).
-2. Send image payload over UART:
+2. (Optional) Regenerate RGB bootloader input bytes from the RGB header:
 
 ```bash
 cd sim
-py uart_sender.py --port COM8 --input original_image.txt --baud 115200
+py gen_rgb_bootloader_input.py --input ../mem_generator/image_data_rgb.h --output original_image_rgb_bytes.txt
 ```
 
-3. Set `SW[15]` low to begin processing/output phase.
-4. Optionally capture UART output:
+3. Send image payload over UART:
 
 ```bash
 cd sim
-py uart_listener.py
+py uart_sender_rgb.py --port COM8 --baud 115200
+```
+
+4. Set `SW[15]` low to begin processing/output phase.
+5. Capture RGB UART output and reconstruct an image:
+
+```bash
+cd sim
+py uart_receiver_rgb.py --port COM8 --baud 115200 --width 128 --height 96 --output uart_rgb_output.png
 ```
 
 ## Notes and Operational Expectations
-- The current bootloader flow expects `49152` image bytes (256x192 grayscale).
+- Current RGB flow uses `128x96` pixels (`12288` total pixels).
+- Bootloader RX input expects `49152` bytes (`12288` pixels x 4 bytes per pixel in `0x00RRGGBB` memory layout).
+- UART TX output streams `R,G,B` bytes per pixel (`36864` bytes total per frame).
+- VGA path displays RGB output and scales the `128x96` framebuffer to a `512x384` draw area.
 - Memory initialization paths in `modules/memory.v` currently use absolute paths. If you move the repository, update those paths accordingly.
-- Warnings related to missing `vram_init.hex` affect VRAM prefill behavior, not IMEM/DMEM compilation directly.
 
 ## Troubleshooting Checklist
 - No LED/output activity:
 	- Confirm reset polarity and constraint file matches top-level ports.
 	- Confirm `SW[15]` sequence is followed (high for load, low for run).
 	- Confirm UART COM port and baud are correct (`115200`).
-- Unexpected black output:
-	- Verify full payload length is transmitted (`49152` bytes).
+- Missing or incomplete RGB output image:
+	- Verify full payload length is transmitted (`49152` input bytes).
+	- Verify receiver gets exactly `36864` output bytes before timeout.
+	- Verify sender/receiver scripts are the RGB versions (`uart_sender_rgb.py`, `uart_receiver_rgb.py`).
 	- Verify synthesis log reports successful `$readmemh` for IMEM/DMEM files.
