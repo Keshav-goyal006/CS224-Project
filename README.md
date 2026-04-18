@@ -22,26 +22,65 @@ The project supports both:
 - `sim/`: Simulation make flow, file list, UART utilities, and output rendering scripts
 
 ## Development Progress (Commit-Based)
-Recent milestones inferred from project history:
+This section is generated directly from `git log` so it reflects actual repository activity.
 
-| Date | Commit | Milestone |
+<!-- PROGRESS_TABLE_START -->
+| Date | Commit | Message |
 |---|---|---|
-| 2026-04-18 | `3d52637` | FPGA grayscale flow reported working |
-| 2026-04-18 | `049e7ef` | Mini demo completed |
-| 2026-04-15 | `b27e542` | Erosion filter integrated |
-| 2026-04-15 | `bdce6b5` | Memory size and kernel size expanded |
-| 2026-04-12 | `07832f6` | Memory map integration |
-| 2026-04-12 | `3f7fa38` | Top-level integration stabilized |
-| 2026-04-12 | `b1e6684` | 5x5 convolution implementation |
-| 2026-04-12 | `437199d` | Line buffers and switch-controlled kernels integrated |
-| 2026-04-12 | `ae49290` | Hazard work and UART bring-up progress |
-| 2026-04-03 | `658fb02` | VGA controller integration |
-| 2026-04-03 | `44f0777` | Initial convolution accelerator commit |
+| 2026-04-18 | `7dcc3ec` | Readme |
+| 2026-04-18 | `3d52637` | FPGA working (grayscale) |
+| 2026-04-18 | `107d6e8` | new files |
+| 2026-04-18 | `049e7ef` | Mini Demo done |
+| 2026-04-15 | `b27e542` | Erosion filter added |
+| 2026-04-15 | `4f51b4a` | rgb implemented only in testbench |
+| 2026-04-15 | `bdce6b5` | Memory increased and so increase the size of kernel |
+| 2026-04-12 | `07832f6` | memory mapping |
+| 2026-04-12 | `3f7fa38` | working top |
+| 2026-04-12 | `b1e6684` | 5x5 convolution implemented |
+| 2026-04-12 | `437199d` | Line buffers implemented and kernels integrated to switches |
+| 2026-04-12 | `ae49290` | Eliminated hazard and is working on UART |
+| 2026-04-11 | `7745627` | New changes |
+| 2026-04-03 | `8ffa00b` | Merge pull request #8 from Keshav-goyal006/Dhairya-goyal |
+| 2026-04-03 | `2610493` | Merge pull request #7 from Keshav-goyal006/Madhav |
+| 2026-04-03 | `b56396b` | Merge branch 'main' into Madhav |
+| 2026-04-03 | `f38efd3` | All done. |
+| 2026-04-03 | `9e5b9d7` | Merge pull request #6 from Keshav-goyal006/Ayush-Garg |
+| 2026-04-03 | `365b810` | added xdc |
+| 2026-04-03 | `f00b64f` | correction |
+| 2026-04-03 | `adc3b1e` | Merge pull request #5 from Keshav-goyal006/Ayush-Garg |
+| 2026-04-03 | `658fb02` | Added vga_controller |
+| 2026-04-03 | `07ec8fb` | Merge pull request #4 from Keshav-goyal006/Keshav |
+| 2026-04-03 | `a495851` | conv |
+| 2026-04-03 | `228fb3b` | Merge pull request #3 from Keshav-goyal006/Keshav |
+| 2026-04-03 | `44f0777` | Conv-accelerator |
+| 2026-04-01 | `a475fe1` | Image processor |
+| 2026-04-01 | `61a5670` | Merge pull request #2 from Keshav-goyal006/Keshav |
+| 2026-04-01 | `6fffded` | Folders made |
+| 2026-03-30 | `b532690` | MAC implemented |
+| 2026-03-30 | `2ec9929` | This is the first Commit. The RV32M Instruction Set implemented. Also MAC implemented. |
+| 2026-03-29 | `09a8662` | Add files via upload |
+| 2026-03-29 | `ae839ab` | Initial commit |
+<!-- PROGRESS_TABLE_END -->
+
+### Activity Gaps (Commit Dates)
+<!-- PROGRESS_GAPS_START -->
+- 2026-04-16 to 2026-04-17: no commits (2 days)
+- 2026-04-13 to 2026-04-14: no commits (2 days)
+- 2026-04-04 to 2026-04-10: no commits (7 days)
+- 2026-04-02: no commits (1 day)
+- 2026-03-31: no commits (1 day)
+<!-- PROGRESS_GAPS_END -->
 
 To refresh this section in the future:
 
 ```bash
-git log --date=short --pretty=format:"%h|%ad|%s" -n 25
+make progress
+```
+
+Reference command used by the generator:
+
+```bash
+git log --date=short --pretty=format:"%h|%ad|%s" -n 50
 ```
 
 ## Prerequisites

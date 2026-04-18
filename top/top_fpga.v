@@ -81,6 +81,7 @@ module top_fpga #(
     wire [9:0] vga_h_count;
     wire [9:0] vga_v_count;
     wire video_on;
+    wire [23:0] vga_pixel_rgb;
     wire [7:0] vga_pixel_data;
     
     wire        dmem_write_ready;
@@ -188,7 +189,7 @@ module top_fpga #(
     //     .rdata    (accel_rdata)
     // );
 
-    stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
+    stream_accel_5x5_rgb #(.IMG_WIDTH(128)) my_conv (
         .clk      (clk_25MHz),         // Use the raw testbench clock
         .reset    (core_reset),
         .switches (sw[3:0]),
@@ -231,9 +232,17 @@ module top_fpga #(
     // -----------------------------------------------------------------
     // VRAM AND VGA INTEGRATION
     // -----------------------------------------------------------------
-    // Convert the 32-bit CPU address down to a 0-49151 index for 256x192 VRAM.
-    wire [15:0] vram_write_addr = dmem_write_address[15:0];
-    wire [15:0] vram_read_addr = ((vga_y >> 1) * 256) + (vga_x >> 1);
+    localparam integer OUT_IMG_WIDTH = 128;
+    localparam integer OUT_IMG_HEIGHT = 96;
+
+    // Keep an 8-bit readback path for the current interconnect interface.
+    assign vga_pixel_data = vga_pixel_rgb[7:0];
+
+    // Map CPU byte addresses to word-indexed VRAM pixels (0x00030000 base).
+    wire [15:0] vram_write_addr = dmem_write_address[15:2];
+
+    // Scale 640x480 timing down to a centered 128x96 framebuffer shown as 512x384.
+    wire [15:0] vram_read_addr = ((vga_y >> 2) * OUT_IMG_WIDTH) + (vga_x >> 2);
     
     // Instantiate Dual-Port VRAM
     dual_port_vram VRAM (
@@ -241,13 +250,14 @@ module top_fpga #(
         
         // Port A: CPU Write
         .we_a   (vram_we), // Now strictly controlled by the Interconnect!
+        .wstrb_a(dmem_write_byte),
         .addr_a (vram_write_addr),
-        .din_a  (dmem_write_data[7:0]),
+        .din_a  (dmem_write_data),
         
         // Port B: VGA Read
-        // Scale 640x480 to 256x192 by dividing X and Y by 2.
+        // Scale 640x480 to 128x96 by dividing X and Y by 4.
         .addr_b (vram_read_addr),
-        .dout_b (vga_pixel_data)
+        .dout_b (vga_pixel_rgb)
     );
 
     // Instantiate VGA Timing Controller
@@ -263,16 +273,16 @@ module top_fpga #(
         .v_count   (vga_v_count)
     );
 
-    // Map 8-bit grayscale VRAM data to 12-bit RGB Nexys A7 Output
+    // Map 24-bit RGB VRAM data to 12-bit VGA DAC outputs
     // If video_on is false, we MUST output black to keep the monitor synced
-    // assign vga_r = video_on ? vga_pixel_data[7:4] : 4'h0;
-    // assign vga_g = video_on ? vga_pixel_data[7:4] : 4'h0;
-    // assign vga_b = video_on ? vga_pixel_data[7:4] : 4'h0;
+    // assign vga_r = video_on ? vga_pixel_rgb[23:20] : 4'h0;
+    // assign vga_g = video_on ? vga_pixel_rgb[15:12] : 4'h0;
+    // assign vga_b = video_on ? vga_pixel_rgb[7:4]   : 4'h0;
 
-    wire valid_draw_area = video_on && (vga_x < 512) && (vga_y < 384);
+    wire valid_draw_area = video_on && (vga_x < (OUT_IMG_WIDTH << 2)) && (vga_y < (OUT_IMG_HEIGHT << 2));
 
-    assign vga_r = valid_draw_area ? vga_pixel_data[7:4] : 4'h0;
-    assign vga_g = valid_draw_area ? vga_pixel_data[7:4] : 4'h0;
-    assign vga_b = valid_draw_area ? vga_pixel_data[7:4] : 4'h0;
+    assign vga_r = valid_draw_area ? vga_pixel_rgb[23:20] : 4'h0;
+    assign vga_g = valid_draw_area ? vga_pixel_rgb[15:12] : 4'h0;
+    assign vga_b = valid_draw_area ? vga_pixel_rgb[7:4] : 4'h0;
 
 endmodule

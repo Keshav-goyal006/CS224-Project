@@ -25,7 +25,7 @@ module tb_pipeline;
     // Define switches and select a kernel
     reg [15:0] sw;
     initial begin
-        sw = 16'h0002; // 9x9 Gaussian blur in the low bits
+        sw = 16'h0002; // 5x5 edge-detect in the low bits
     end
 
 
@@ -136,12 +136,12 @@ module tb_pipeline;
     // );
 
     // =================================================================
-    // 3. HARDWARE ACCELERATOR (9x9 Grayscale)
+    // 3. HARDWARE ACCELERATOR (5x5 RGB)
     // =================================================================
-    stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
+    stream_accel_5x5_rgb #(.IMG_WIDTH(128)) my_conv (
         .clk      (clk),         
         .reset    (reset),
-        .switches (sw[3:0]),         // low bits select the 9x9 kernel
+        .switches (sw[3:0]),
         .we       (accel_we),
         .waddr    (dmem_write_address),
         .wdata    (dmem_write_data),
@@ -200,11 +200,14 @@ module tb_pipeline;
     end
 
     ////////////////////////////////////////////////////////////
-    // SPY ON THE UART & CATCH THE 19,200 PIXELS
+    // SPY ON THE UART and reconstruct RGB pixels
     ////////////////////////////////////////////////////////////
     integer file_out;
     integer pixel_count;
     integer cnt;
+    reg [1:0] rgb_phase;
+    reg [7:0] rgb_r;
+    reg [7:0] rgb_g;
 
 
     initial begin
@@ -212,6 +215,9 @@ module tb_pipeline;
         file_out = $fopen("simulated_pixels.txt", "w");
         pixel_count = 0;
         cnt = 0;
+        rgb_phase = 0;
+        rgb_r = 0;
+        rgb_g = 0;
     end
 
     // -------------------------------------------------------------------------
@@ -250,20 +256,31 @@ module tb_pipeline;
     always @(posedge clk) begin
         // UART TX data register at 0x00015000
         if (dmem_write_ready && dmem_write_address == 32'h00015000) begin
-            
-            // Write the 8-bit grayscale output
-            $fdisplay(file_out, "%0d", dmem_write_data[7:0]);
-            pixel_count = pixel_count + 1;
-            
-            if (pixel_count % 1000 == 0) begin
-                $display("Simulated %0d / 49152 pixels...", pixel_count);
-            end
+            case (rgb_phase)
+                2'd0: begin
+                    rgb_r = dmem_write_data[7:0];
+                    rgb_phase = 2'd1;
+                end
+                2'd1: begin
+                    rgb_g = dmem_write_data[7:0];
+                    rgb_phase = 2'd2;
+                end
+                default: begin
+                    $fdisplay(file_out, "%08x", {8'h00, rgb_r, rgb_g, dmem_write_data[7:0]});
+                    rgb_phase = 2'd0;
+                    pixel_count = pixel_count + 1;
 
-            if (pixel_count == 49152) begin
-                $display("SUCCESS: All 49152 grayscale pixels generated!");
-                $fclose(file_out);
-                $finish;
-            end
+                    if (pixel_count % 1000 == 0) begin
+                        $display("Simulated %0d / 12288 RGB pixels...", pixel_count);
+                    end
+
+                    if (pixel_count == 12288) begin
+                        $display("SUCCESS: All 12288 RGB pixels generated!");
+                        $fclose(file_out);
+                        $finish;
+                    end
+                end
+            endcase
         end
     end
 

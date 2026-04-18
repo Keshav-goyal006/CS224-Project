@@ -35,6 +35,7 @@ bootloader:
 	$(MAKE) clean -C $(MEM_GEN)
 	$(MAKE) $@ -C $(MEM_GEN)
 	cp $(MEM_GEN)/imem_dmem/*.hex .
+	python gen_rgb_bootloader_input.py --input ../mem_generator/image_data_rgb.h --output original_image_rgb_bytes.txt
 
 	# 2. Vivado Simulation Flow
 	$(XVLOG) $(BFLAGS)
@@ -42,6 +43,7 @@ bootloader:
 
 	# 3. Run Simulation (log to stdout to see $display)
 	$(XSIM) $(SNAPSHOT) -runall -log stdout
+	python rgb_img.py
 
 #   $(XSIM) $(SNAPSHOT) -R
 
@@ -51,6 +53,7 @@ clean:
 	@rm -f xvlog.log xvlog.pb xelab.log xelab.pb xsim.log xsim.jou xsim.pb
 	@rm -f pipeline.vcd
 	@rm -f imem.hex dmem.hex # <--- NEW: Cleans up the copied hex files in this dir
+	@rm -f original_image_rgb_bytes.txt
 # 	$(MAKE) clean -C $(MEM_GEN) # <--- NEW: Also cleans up the mem_generator directory
 	@rm -f riscv_sim.wdb # <--- NEW: Cleans up the waveform database file
 	@rm -f stdout

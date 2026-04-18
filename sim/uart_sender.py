@@ -13,7 +13,7 @@ if not hasattr(serial, "Serial"):
 
 DEFAULT_BAUD = 115200
 DEFAULT_PORT = "COM8"
-DEFAULT_INPUT = "original_image.txt"
+DEFAULT_INPUT = "original_image_rgb_bytes.txt"
 DEFAULT_CHUNK_SIZE = 64
 IMAGE_BYTES = 49152
 
@@ -77,7 +77,7 @@ def send_image(port, input_path, baud_rate=DEFAULT_BAUD, chunk_size=DEFAULT_CHUN
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Send a 49152-byte grayscale image over UART.")
+    parser = argparse.ArgumentParser(description="Send a 49152-byte bootloader payload over UART.")
     parser.add_argument("--port", default=DEFAULT_PORT, help="Serial port, e.g. COM8")
     parser.add_argument("--input", default=DEFAULT_INPUT, help="Input image file (.bin, .txt, .hex, .mem)")
     parser.add_argument("--baud", type=int, default=DEFAULT_BAUD, help="UART baud rate")

@@ -41,6 +41,10 @@ def convert_output_to_image(input_filename, output_filename, width=128, height=9
     img.save(output_filename)
     print(f"Successfully reconstructed {output_filename} from {pixel_count} pixels!")
 
-# --- Execution ---
-# Replace 'vram_dump.txt' with the file containing your FPGA output
-convert_output_to_image("simulated_pixels.txt", "filtered_output.png")
+if __name__ == "__main__":
+    convert_output_to_image("simulated_pixels.txt", "filtered_output.png")
+
+    try:
+        convert_output_to_image("simulated_pixels_warm.txt", "filtered_output_warm.png")
+    except FileNotFoundError:
+        print("simulated_pixels_warm.txt not found; skipped warm-run image render.")

@@ -2,8 +2,10 @@
 
 module tb_pipeline_bootloader;
 
-    localparam [3:0] FILTER_FIRST  = 4'b0010; // Edge Detect / first pass
+    localparam [3:0] FILTER_FIRST  = 4'b0010; // Edge detect / first pass
     localparam [3:0] FILTER_SECOND = 4'b0100; // Sharpen / second pass
+    localparam integer INPUT_BYTES = 49152;
+    localparam integer OUTPUT_PIXELS = 12288;
 
     reg clk;
     reg reset;
@@ -81,7 +83,7 @@ module tb_pipeline_bootloader;
         .sw_in              (sw)
     );
 
-    stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
+    stream_accel_5x5_rgb #(.IMG_WIDTH(128)) my_conv (
         .clk      (clk),
         .reset    (reset),
         .switches (sw[3:0]),
@@ -132,7 +134,13 @@ module tb_pipeline_bootloader;
     integer second_file;
     integer image_file;
     integer scan_result;
-    reg [7:0] input_image [0:49151];
+    reg [7:0] input_image [0:INPUT_BYTES-1];
+    reg [1:0] rgb_phase_run1;
+    reg [7:0] rgb_r_run1;
+    reg [7:0] rgb_g_run1;
+    reg [1:0] rgb_phase_run2;
+    reg [7:0] rgb_r_run2;
+    reg [7:0] rgb_g_run2;
 
     task send_uart_byte_until_dmem_write;
         input [7:0] value;
@@ -166,34 +174,60 @@ module tb_pipeline_bootloader;
     always @(posedge clk) begin
         if (dmem_write_ready && dmem_write_address == 32'h00015000 && cycle_count > 0) begin
             if (output_phase == 0) begin
-                $fdisplay(first_file, "%0d", dmem_write_data[7:0]);
-                first_output_count = first_output_count + 1;
+                case (rgb_phase_run1)
+                    2'd0: begin
+                        rgb_r_run1 = dmem_write_data[7:0];
+                        rgb_phase_run1 = 2'd1;
+                    end
+                    2'd1: begin
+                        rgb_g_run1 = dmem_write_data[7:0];
+                        rgb_phase_run1 = 2'd2;
+                    end
+                    default: begin
+                        $fdisplay(first_file, "%08x", {8'h00, rgb_r_run1, rgb_g_run1, dmem_write_data[7:0]});
+                        rgb_phase_run1 = 2'd0;
+                        first_output_count = first_output_count + 1;
 
-                if (first_output_count == 1) begin
-                    $display("INFO: First run output started from UART.");
-                end else if ((first_output_count % 8192) == 0) begin
-                    $display("Run 1 progress: %0d / 49152 bytes", first_output_count);
-                end
+                        if (first_output_count == 1) begin
+                            $display("INFO: First run output started from UART.");
+                        end else if ((first_output_count % 2048) == 0) begin
+                            $display("Run 1 progress: %0d / %0d RGB pixels", first_output_count, OUTPUT_PIXELS);
+                        end
 
-                if (first_output_count == 49152) begin
-                    $display("PASS: first filter finished. Ready for warm reset and second filter.");
-                end
+                        if (first_output_count == OUTPUT_PIXELS) begin
+                            $display("PASS: first filter finished. Ready for warm reset and second filter.");
+                        end
+                    end
+                endcase
             end else begin
-                $fdisplay(second_file, "%0d", dmem_write_data[7:0]);
-                second_output_count = second_output_count + 1;
+                case (rgb_phase_run2)
+                    2'd0: begin
+                        rgb_r_run2 = dmem_write_data[7:0];
+                        rgb_phase_run2 = 2'd1;
+                    end
+                    2'd1: begin
+                        rgb_g_run2 = dmem_write_data[7:0];
+                        rgb_phase_run2 = 2'd2;
+                    end
+                    default: begin
+                        $fdisplay(second_file, "%08x", {8'h00, rgb_r_run2, rgb_g_run2, dmem_write_data[7:0]});
+                        rgb_phase_run2 = 2'd0;
+                        second_output_count = second_output_count + 1;
 
-                if (second_output_count == 1) begin
-                    $display("INFO: Second run output started from UART.");
-                end else if ((second_output_count % 8192) == 0) begin
-                    $display("Run 2 progress: %0d / 49152 bytes", second_output_count);
-                end
+                        if (second_output_count == 1) begin
+                            $display("INFO: Second run output started from UART.");
+                        end else if ((second_output_count % 2048) == 0) begin
+                            $display("Run 2 progress: %0d / %0d RGB pixels", second_output_count, OUTPUT_PIXELS);
+                        end
 
-                if (second_output_count == 49152) begin
-                    $fclose(first_file);
-                    $fclose(second_file);
-                    $display("PASS: bootloader loaded the image once, warm reset preserved DMEM, and two filters completed.");
-                    $finish;
-                end
+                        if (second_output_count == OUTPUT_PIXELS) begin
+                            $fclose(first_file);
+                            $fclose(second_file);
+                            $display("PASS: bootloader loaded the image once, warm reset preserved DMEM, and two filters completed.");
+                            $finish;
+                        end
+                    end
+                endcase
             end
         end
     end
@@ -208,6 +242,12 @@ module tb_pipeline_bootloader;
         first_output_count = 0;
         second_output_count = 0;
         output_phase = 0;
+        rgb_phase_run1 = 0;
+        rgb_phase_run2 = 0;
+        rgb_r_run1 = 0;
+        rgb_g_run1 = 0;
+        rgb_r_run2 = 0;
+        rgb_g_run2 = 0;
 
         first_file = $fopen("simulated_pixels.txt", "w");
         if (first_file == 0) begin
@@ -221,40 +261,38 @@ module tb_pipeline_bootloader;
             $finish;
         end
 
-        image_file = $fopen("original_image.txt", "r");
+        image_file = $fopen("original_image_rgb_bytes.txt", "r");
         if (image_file == 0) begin
-            $display("FAIL: could not open original_image.txt for reading.");
+            $display("FAIL: could not open original_image_rgb_bytes.txt for reading.");
             $finish;
         end
 
-        for (i = 0; i < 49152; i = i + 1) begin
+        for (i = 0; i < INPUT_BYTES; i = i + 1) begin
             scan_result = $fscanf(image_file, "%d\n", input_image[i]);
             if (scan_result != 1) begin
-                $display("FAIL: could not read pixel %0d from original_image.txt.", i);
+                $display("FAIL: could not read byte %0d from original_image_rgb_bytes.txt.", i);
                 $finish;
             end
         end
 
         $fclose(image_file);
-        $display("INFO: Loaded 49152 input pixels from original_image.txt.");
+        $display("INFO: Loaded %0d RGB input bytes from original_image_rgb_bytes.txt.", INPUT_BYTES);
 
         repeat (10) @(negedge clk);
         reset = 1'b1;
         $display("INFO: Reset released; bootloader should start now with SW[15]=%b.", sw[15]);
         repeat (20) @(negedge clk);
 
-        $display("Starting integrated bootloader + pipeline test with original_image.txt...");
-        $display("INFO: Entering UART load phase for 49152 bytes.");
+        $display("Starting integrated bootloader + pipeline test with original_image_rgb_bytes.txt...");
+        $display("INFO: Entering UART load phase for %0d bytes.", INPUT_BYTES);
 
-        for (i = 0; i < 49152; i = i + 1) begin
+        for (i = 0; i < INPUT_BYTES; i = i + 1) begin
             send_uart_byte_until_dmem_write(input_image[i], (32'h00001000 + i));
 
             if (i == 0) begin
                 $display("INFO: First bootloader byte accepted at DMEM address 0x%08x.", (32'h00001000 + i));
             end else if ((i % 4096) == 0) begin
-                $display("INFO: UART load progress: %0d / 49152 bytes accepted.", i);
-            end else if ((i % 8192) == 0) begin
-                $display("INFO: Bootloader load progress: %0d / 49152 bytes written.", i);
+                $display("INFO: UART load progress: %0d / %0d bytes accepted.", i, INPUT_BYTES);
             end
         end
 
@@ -264,7 +302,7 @@ module tb_pipeline_bootloader;
         $display("SW[15] is now low; pipeline should start processing the loaded image.");
 
         $display("INFO: UART load complete; waiting for first pass output now.");
-        wait (first_output_count == 49152);
+        wait (first_output_count == OUTPUT_PIXELS);
 
         repeat (20) @(negedge clk);
         output_phase = 1;
