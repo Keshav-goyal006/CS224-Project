@@ -5,7 +5,9 @@
 ../modules/conv_accelerator.v
 ../modules/vga_controller.v
 ../modules/pipeline.v
+../modules/uart_rx.v
 ../modules/tb_pipeline.v
+../modules/tb_pipeline_bootloader.v
 ../modules/uart_tx.v
 ../modules/soc_interconnect.v
 ../modules/vga_controller.v

@@ -6,6 +6,7 @@ module top_fpga #(
 )(
     input  wire clk,        // fast board clock (100 MHz)
     input  wire reset,      // active-low reset
+    input  wire warm_reset_btn,
     input  wire [15:0] sw,
     output wire [15:0] led,
     
@@ -16,18 +17,44 @@ module top_fpga #(
     output wire vga_hs,
     output wire vga_vs,
 
-    output wire uart_txd
+    output wire uart_txd,
+    input  wire uart_rxd
 );
 
     // -----------------------------------------------------------------
     // 100 MHz -> 25 MHz Clock Divider (Required for standard 640x480 VGA)
     // -----------------------------------------------------------------
     reg [1:0] clk_div;
+    reg warm_reset_sync_1;
+    reg warm_reset_sync_2;
+    reg warm_reset_sync_3;
+    reg warm_reset_pending;
+    wire warm_reset_clear;
     always @(posedge clk or negedge reset) begin
         if (!reset) clk_div <= 2'b00;
         else clk_div <= clk_div + 1'b1;
     end
     wire clk_25MHz = clk_div[1]; 
+    wire core_reset = reset & ~warm_reset_sync_2;
+
+    always @(posedge clk_25MHz or negedge reset) begin
+        if (!reset) begin
+            warm_reset_sync_1 <= 1'b0;
+            warm_reset_sync_2 <= 1'b0;
+            warm_reset_sync_3 <= 1'b0;
+            warm_reset_pending <= 1'b0;
+        end else begin
+            warm_reset_sync_1 <= warm_reset_btn;
+            warm_reset_sync_2 <= warm_reset_sync_1;
+            warm_reset_sync_3 <= warm_reset_sync_2;
+
+            if (warm_reset_sync_2 && !warm_reset_sync_3) begin
+                warm_reset_pending <= 1'b1;
+            end else if (warm_reset_clear) begin
+                warm_reset_pending <= 1'b0;
+            end
+        end
+    end
 
     // -----------------------------------------------------------------
     // PIPE ↔ MEMORY WIRES
@@ -41,6 +68,20 @@ module top_fpga #(
     wire [31:0] dmem_read_data;
     wire        dmem_read_ready;
     wire [31:0] dmem_read_address;
+
+    wire [31:0] cpu_rdata_mux;
+    wire dmem_we_actual, accel_we, vram_we, uart_we, led_we, sim_trap_we;
+    wire [31:0] accel_rdata;
+    wire tx_active;
+    wire [7:0] uart_byte;
+    wire uart_done;
+
+    wire [9:0] vga_x;
+    wire [9:0] vga_y;
+    wire [9:0] vga_h_count;
+    wire [9:0] vga_v_count;
+    wire video_on;
+    wire [7:0] vga_pixel_data;
     
     wire        dmem_write_ready;
     wire [31:0] dmem_write_address;
@@ -52,7 +93,7 @@ module top_fpga #(
     // -----------------------------------------------------------------
     pipe pipe_u (
         .clk                 (clk_25MHz),
-        .reset               (reset),
+        .reset               (core_reset),
         .stall               (1'b0),
         .exception           (exception),
         .pc_out              (pc_out_w),
@@ -70,21 +111,26 @@ module top_fpga #(
         .dmem_write_ready    (dmem_write_ready),
         .dmem_write_address  (dmem_write_address),
         .dmem_write_data     (dmem_write_data),
-        .dmem_write_byte     (dmem_write_byte)
+        .dmem_write_byte     (dmem_write_byte),
+        .switch_in           (sw)
     );
 
     // -----------------------------------------------------------------
     // SOC INTERCONNECT & PERIPHERALS
     // -----------------------------------------------------------------
-    wire [31:0] cpu_rdata_mux;
-    wire dmem_we_actual, accel_we, vram_we, uart_we, led_we, sim_trap_we;
-    wire [31:0] accel_rdata;
-    wire tx_active;
+    uart_rx #(
+        .CLOCKS_PER_BIT(217)
+    ) uart_rx_inst (
+        .clk(clk_25MHz),
+        .rx(uart_rxd),
+        .rx_data(uart_byte),
+        .rx_done(uart_done)
+    );
 
     // 1. The Interconnect (Traffic Cop)
     soc_interconnect bus (
         .clk        (clk_25MHz),          // New Clock Port
-        .reset      (reset),              // New Reset Port
+        .reset      (core_reset),              // New Reset Port
         
         .cpu_waddr  (dmem_write_address), // Separated Write Address
         .cpu_raddr  (dmem_read_address),  // Separated Read Address
@@ -103,13 +149,18 @@ module top_fpga #(
         .dmem_rdata (dmem_read_data),
         .vram_rdata (vga_pixel_data), 
         .accel_rdata(accel_rdata),
-        .uart_rdata ({31'b0, tx_active})
+        .tx_active  (tx_active),
+        .rx_data_in (uart_byte),
+        .rx_valid_in(uart_done),
+        .warm_reset_pending(warm_reset_pending),
+        .warm_reset_clear(warm_reset_clear),
+        .sw_in      (sw)
     );
 
     // LED Register Logic
     reg [15:0] led_reg;
-    always @(posedge clk_25MHz or negedge reset) begin
-        if (!reset) led_reg <= 16'b0;
+    always @(posedge clk_25MHz or negedge core_reset) begin
+        if (!core_reset) led_reg <= 16'b0;
         else if (led_we) led_reg <= dmem_write_data[15:0];
     end
     assign led = led_reg;
@@ -139,8 +190,8 @@ module top_fpga #(
 
     stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
         .clk      (clk_25MHz),         // Use the raw testbench clock
-        .reset    (reset),
-        .switches (sw),          // Pass the simulated testbench switches
+        .reset    (core_reset),
+        .switches (sw[3:0]),
         .we       (accel_we),
         .waddr    (dmem_write_address),
         .wdata    (dmem_write_data),
@@ -152,7 +203,7 @@ module top_fpga #(
     // 3. UART Transmitter
     uart_tx #( .CLKS_PER_BIT(217) ) my_uart (
         .clk        (clk_25MHz), 
-        .reset      (reset),
+        .reset      (core_reset),
         .tx_start   (uart_we), 
         .tx_data    (dmem_write_data[7:0]),
         .tx_active  (tx_active),
@@ -180,13 +231,9 @@ module top_fpga #(
     // -----------------------------------------------------------------
     // VRAM AND VGA INTEGRATION
     // -----------------------------------------------------------------
-    wire [9:0] vga_x;
-    wire [9:0] vga_y;
-    wire video_on;
-    wire [7:0] vga_pixel_data;
-
-    // Convert the massive 32-bit CPU address down to a 0-19199 array index for the VRAM module
+    // Convert the 32-bit CPU address down to a 0-49151 index for 256x192 VRAM.
     wire [15:0] vram_write_addr = dmem_write_address[15:0];
+    wire [15:0] vram_read_addr = ((vga_y >> 1) * 256) + (vga_x >> 1);
     
     // Instantiate Dual-Port VRAM
     dual_port_vram VRAM (
@@ -198,8 +245,8 @@ module top_fpga #(
         .din_a  (dmem_write_data[7:0]),
         
         // Port B: VGA Read
-        // Scale 640x480 to 160x120 by dividing X and Y by 4 (bit shifting by 2)
-        .addr_b ( ((vga_y >> 1) * 256) + (vga_x >> 1) ),
+        // Scale 640x480 to 256x192 by dividing X and Y by 2.
+        .addr_b (vram_read_addr),
         .dout_b (vga_pixel_data)
     );
 
@@ -211,7 +258,9 @@ module top_fpga #(
         .vsync     (vga_vs),
         .video_on  (video_on),
         .x         (vga_x),
-        .y         (vga_y)
+        .y         (vga_y),
+        .h_count   (vga_h_count),
+        .v_count   (vga_v_count)
     );
 
     // Map 8-bit grayscale VRAM data to 12-bit RGB Nexys A7 Output

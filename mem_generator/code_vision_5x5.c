@@ -1,9 +1,10 @@
 #include <stdint.h>
-#include "image_data.h"
 
 // ---------------------------------------------------------
 // NEW 64KB Memory Map Addresses
 // ---------------------------------------------------------
+volatile uint8_t* const IMAGE_BASE = (uint8_t*)0x00001000;
+
 // Accelerator Base is 0x00012000
 volatile uint32_t* const ACCEL_PIX_IN  = (uint32_t*)0x00012024; 
 // volatile uint32_t* const ACCEL_TEMP = (uint32_t*)0x00012028; 
@@ -12,30 +13,37 @@ volatile uint32_t* const ACCEL_MAC_OUT = (uint32_t*)0x00012028;
 // UART Base is 0x00015000
 volatile uint32_t* const UART_TX_DATA  = (uint32_t*)0x00015000;
 volatile uint32_t* const UART_TX_STAT  = (uint32_t*)0x00015004;
+volatile uint32_t* const WARM_RESET_PENDING = (uint32_t*)0x00016010;
+volatile uint32_t* const WARM_RESET_CLEAR   = (uint32_t*)0x00016014;
 
 // ---------------------------------------------------------
 // 256x192 Image Constants
 // ---------------------------------------------------------
 #define TOTAL_PIXELS 49152
 
-// For a 5x5 kernel, warmup is usually 2 full rows + 2 pixels
-// (2 * 256) + 2 = 514 pixels. 
-// Adjust this if your line buffer architecture differs!
+// For a 9x9 kernel, warmup is 4 full rows + 4 pixels
+// (4 * 256) + 4 = 1028 pixels.
 #define WARMUP_PIXELS 1028 
+
+static inline void acknowledge_warm_reset(void) {
+    if (*WARM_RESET_PENDING) {
+        *WARM_RESET_CLEAR = 1;
+    }
+}
 
 int main() {
     register int i asm("s1");
     register uint32_t final_pixel asm("s4");
-    
-    // THE BYPASS: Treat the 8-bit array as a 32-bit word array
-    // This prevents the CPU from trying to execute a faulty 'lbu' byte-load
-    uint32_t* words_array = (uint32_t*)image_pixels;
+
+    acknowledge_warm_reset();
+    *(volatile uint32_t*)0x00013000 = 0x0001; // Turn on LED0 when app code starts.
 
     // PHASE 1: WARM UP 
     for (i = 0; i < WARMUP_PIXELS; i++) {
         int word_index = i >> 2; 
         int byte_offset = i & 3; 
-        uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
+        uint32_t pixel_val = ((uint32_t *)IMAGE_BASE)[word_index] >> (byte_offset * 8);
+        pixel_val &= 0xFF;
         
         *ACCEL_PIX_IN = pixel_val;
         asm volatile("nop"); asm volatile("nop"); asm volatile("nop");
@@ -45,7 +53,8 @@ int main() {
     for (i = WARMUP_PIXELS; i < TOTAL_PIXELS; i++) {
         int word_index = i >> 2; 
         int byte_offset = i & 3; 
-        uint32_t pixel_val = (words_array[word_index] >> (byte_offset * 8)) & 0xFF;
+        uint32_t pixel_val = ((uint32_t *)IMAGE_BASE)[word_index] >> (byte_offset * 8);
+        pixel_val &= 0xFF;
         
         *ACCEL_PIX_IN = pixel_val;
         asm volatile("nop"); asm volatile("nop"); asm volatile("nop");

@@ -31,3 +31,4 @@ def convert_image_to_txt(input_filename, output_filename):
 # Replace 'my_image.jpg' with your picture
 convert_image('image.png', 'image_data.h')
 convert_image_to_txt('image.png', '../sim/original_image.txt')
+convert_image_to_txt('img.png', '../sim/original_image1.txt')

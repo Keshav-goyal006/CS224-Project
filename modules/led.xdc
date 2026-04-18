@@ -10,6 +10,9 @@ create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { c
 # Mapped to the CPU_RESETN button which is inherently active-low
 set_property -dict { PACKAGE_PIN C12   IOSTANDARD LVCMOS33 } [get_ports { reset }];
 
+# Warm reset button on BTNC
+set_property -dict { PACKAGE_PIN N17   IOSTANDARD LVCMOS33 } [get_ports { warm_reset_btn }];
+
 ##Switches
 set_property IOSTANDARD LVCMOS33 [get_ports sw[*]];
 
@@ -29,6 +32,9 @@ set_property PACKAGE_PIN H6  [get_ports {sw[12]}];
 set_property PACKAGE_PIN U12 [get_ports {sw[13]}];
 set_property PACKAGE_PIN U11 [get_ports {sw[14]}];
 set_property PACKAGE_PIN V10 [get_ports {sw[15]}];
+# Override SW8/SW9 voltage standard per Nexys A7 pin bank requirements.
+set_property IOSTANDARD LVCMOS18 [get_ports {sw[8]}];
+set_property IOSTANDARD LVCMOS18 [get_ports {sw[9]}];
 ## -----------------------------------------------------------------
 ## LEDs (16 total)
 ## -----------------------------------------------------------------
@@ -50,8 +56,14 @@ set_property -dict { PACKAGE_PIN V12   IOSTANDARD LVCMOS33 } [get_ports { led[14
 set_property -dict { PACKAGE_PIN V11   IOSTANDARD LVCMOS33 } [get_ports { led[15] }];
 
 
-# set_property -dict { PACKAGE_PIN D4    IOSTANDARD LVCMOS33 } [get_ports { UART_RXD_OUT }]; #IO_L11N_T1_SRCC_35 Sch=uart_rxd_out
+## -----------------------------------------------------------------
+## USB-UART Interface
+## -----------------------------------------------------------------
+# FPGA Transmit (TX) -> PC Receive
 set_property -dict { PACKAGE_PIN D4    IOSTANDARD LVCMOS33 } [get_ports { uart_txd }];
+
+# FPGA Receive (RX) <- PC Transmit (ADDED FOR MEMORY LOADER)
+set_property -dict { PACKAGE_PIN C4    IOSTANDARD LVCMOS33 } [get_ports { uart_rxd }];
 ## -----------------------------------------------------------------
 ## VGA Connector
 ## -----------------------------------------------------------------

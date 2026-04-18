@@ -28,7 +28,7 @@ BIT_IN ?= D:/New/Image_processing/Image_processing.runs/impl_1/top_fpga.bit
 BIT_OUT ?= D:/New/Image_processing/Image_processing.runs/impl_1/fast_update.bit
 
 TARGET           = code.elf
-.PHONY: all clean vision              # <--- NEW: Added vision to phony
+.PHONY: all clean vision bootloader
 
 #/// generating .text file of code cross-compiled from highlevel-c code to risc-v code
 # ////////////// Copying and converting the text file into binary files
@@ -77,8 +77,9 @@ xor: $(SRC_XOR)
 # 	$(OBJDUMP) -d $(TARGET) > ./imem_dmem/code.dis
 # 	cd imem_dmem && python bin2hex.py
 
-vision: $(SRC_VISION)
-	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.S $(SRC_VISION) -o vision.elf
+
+bootloader: $(SRC_VISION)
+	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.s bootloader.c $(SRC_VISION) -o vision.elf
 	
 	# Extract exactly the instructions for IMEM
 	$(OBJCOPY) -O binary -j .text -j .text.init vision.elf ./imem_dmem/imem.bin
@@ -91,6 +92,8 @@ vision: $(SRC_VISION)
 	if [ "$(PATCH_BIT)" = "1" ]; then \
 		$(MAKE) -C $(MEMORY_MAP_DIR) flash_fast BIT_IN="$(BIT_IN)" BIT_OUT="$(BIT_OUT)"; \
 	fi
+
+vision: bootloader
 
 # /////clean function
 clean:

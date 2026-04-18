@@ -22,10 +22,10 @@ module tb_pipeline;
         reset = 1;
     end
 
-    // ADD THIS: Define switches and select a kernel
-    reg [3:0] sw;
+    // Define switches and select a kernel
+    reg [15:0] sw;
     initial begin
-        sw = 4'b0111; // 0001 = Box Blur, 0010 = Edge Detect, 0100 = Sharpen
+        sw = 16'h0002; // 9x9 Gaussian blur in the low bits
     end
 
 
@@ -82,6 +82,7 @@ module tb_pipeline;
     wire [31:0] accel_rdata;
     wire tx_active;
     wire uart_txd; // Dummy wire for simulation
+    wire warm_reset_clear;
 
     soc_interconnect bus (
         .clk        (clk),        // <-- ADD THIS
@@ -103,7 +104,12 @@ module tb_pipeline;
         .dmem_rdata (dmem_read_data),
         .vram_rdata (8'b0), // We don't need VRAM/VGA in simulation
         .accel_rdata(accel_rdata),
-        .uart_rdata ({31'b0, tx_active}) 
+        .tx_active  (tx_active),
+        .rx_data_in (8'b0),
+        .rx_valid_in(1'b0),
+        .warm_reset_pending(1'b0),
+        .warm_reset_clear(warm_reset_clear),
+        .sw_in      (sw)
     );
 
     // =================================================================
@@ -130,20 +136,17 @@ module tb_pipeline;
     // );
 
     // =================================================================
-    // 3. HARDWARE ACCELERATOR (5x5 Upgrade!)
+    // 3. HARDWARE ACCELERATOR (9x9 Grayscale)
     // =================================================================
-    // -----------------------------------------------------------------
-    // 5x5 RGB Hardware Accelerator
-    // -----------------------------------------------------------------
-    stream_accel_5x5_rgb #(.IMG_WIDTH(128)) my_rgb_conv (
+    stream_accel_9x9 #(.IMG_WIDTH(256)) my_conv (
         .clk      (clk),         
         .reset    (reset),
-        .switches (sw[3:0]),         // 4 physical switches for filter selection
+        .switches (sw[3:0]),         // low bits select the 9x9 kernel
         .we       (accel_we),
         .waddr    (dmem_write_address),
-        .wdata    (dmem_write_data), // Pushing {8'h00, R, G, B}
+        .wdata    (dmem_write_data),
         .raddr    (dmem_read_address),
-        .rdata    (accel_rdata)      // Receiving {8'h00, R, G, B}
+        .rdata    (accel_rdata)
     );
 
     // =================================================================
@@ -245,20 +248,19 @@ module tb_pipeline;
     // end
 
     always @(posedge clk) begin
-        // NEW ADDRESS: 0x00015000 for UART TX
+        // UART TX data register at 0x00015000
         if (dmem_write_ready && dmem_write_address == 32'h00015000) begin
             
-            // FIX A: Write the FULL 32-bit RGB word as a Hex string
-            $fdisplay(file_out, "0x%08X", dmem_write_data);
+            // Write the 8-bit grayscale output
+            $fdisplay(file_out, "%0d", dmem_write_data[7:0]);
             pixel_count = pixel_count + 1;
             
             if (pixel_count % 1000 == 0) begin
-                $display("Simulated %0d / 12288 pixels...", pixel_count);
+                $display("Simulated %0d / 49152 pixels...", pixel_count);
             end
 
-            // FIX B: Stop at 12,288 (128x96 image)
-            if (pixel_count == 12288) begin
-                $display("SUCCESS: All 12288 RGB pixels generated!");
+            if (pixel_count == 49152) begin
+                $display("SUCCESS: All 49152 grayscale pixels generated!");
                 $fclose(file_out);
                 $finish;
             end
@@ -330,12 +332,12 @@ module tb_pipeline;
         if (dmem_write_ready) begin
             
             // Did it successfully push the first pixel?
-            // (NEW ADDRESS: 0x00012024 for ACCEL_PIX_IN)
+            // Accelerator pixel input at 0x00012024
             if (dmem_write_address == 32'h00012024)
                 $display("HEARTBEAT: CPU successfully pushed PIXEL to streaming accelerator...");
                 
             // Did it successfully trigger the UART?
-            // (NEW ADDRESS: 0x00015000 for UART_TX_DATA)
+            // UART TX data register at 0x00015000
             if (dmem_write_address == 32'h00015000) begin
                 $display("HEARTBEAT: UART Transmitting pixel %0d...", pixel_count);
             end

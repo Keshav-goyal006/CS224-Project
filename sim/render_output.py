@@ -44,3 +44,4 @@ if __name__ == "__main__":
     # If you used the 4KB memory trick, set this to width=64, height=48
     render_hardware_image('simulated_pixels.txt', 'final_output.png', width=256, height=192)
     render_hardware_image('original_image.txt', 'original_input.jpg', width=256, height=192)
+    render_hardware_image('simulated_pixels_warm.txt', 'final_output_warm.jpg', width=256, height=192)
