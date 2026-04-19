@@ -25,9 +25,8 @@ endmodule
 
 
 
-//====================================
 // Data Memory (DMEM) - FPGA-safe
-//====================================
+
 module data_mem (
 	input     	clk,
 
@@ -38,7 +37,7 @@ module data_mem (
 
 	// Write port
 	input     	we,
-	input  [31:0] waddr,   // byte address
+	input  [31:0] waddr,   
 	input  [31:0] wdata,
 	input  [3:0]  wstrb
 );
