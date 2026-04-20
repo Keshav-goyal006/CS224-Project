@@ -24,7 +24,7 @@ SRC_VISION       = code_vision.c      # <--- NEW: Added vision source
 TARGET           = code.elf
 .PHONY: all clean vision              # <--- NEW: Added vision to phony
 
-#/// generating .text file of code cross-compiled from highlevel-c code to risc-v code
+# /// generating .text file of code cross-compiled from highlevel-c code to risc-v code
 # ////////////// Copying and converting the text file into binary files
 #/////// Python script to convert the binary files into the required hex files
 
