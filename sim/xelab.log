@@ -1,0 +1,26 @@
+Vivado Simulator v2025.2
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+Running: E:/AMDDesignTools/2025.2/Vivado/bin/unwrapped/win64.o/xelab.exe -top tb_pipeline_bootloader -snapshot riscv_sim -debug typical 
+Multi-threading is on. Using 22 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+Completed static elaboration
+Starting simulation data flow analysis
+WARNING: [XSIM 43-4328] File: D:/New/CS224/CS224-Project/modules/tb_pipeline_bootloader.v Line: 153 : Sensitivity on input argument "expected_addr" of task "send_uart_byte_until_dmem_write" may never get triggered.
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module work.id_ex_reg
+Compiling module work.IF_ID
+Compiling module work.ex_mem_wb_reg
+Compiling module work.execute
+Compiling module work.wb
+Compiling module work.pipe
+Compiling module work.soc_interconnect
+Compiling module work.line_buffer_rgb
+Compiling module work.stream_accel_5x5_rgb
+Compiling module work.uart_tx(CLKS_PER_BIT=2)
+Compiling module work.instr_mem
+Compiling module work.data_mem
+Compiling module work.tb_pipeline_bootloader
+Built simulation snapshot riscv_sim

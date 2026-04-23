@@ -1,0 +1,24 @@
+0.7
+2020.2
+Nov 14 2025
+19:37:27
+D:/New/CS224/CS224-Project/modules/IF_ID.v,1776119540,verilog,,D:/New/CS224/CS224-Project/modules/execute.v,D:/New/CS224/CS224-Project/modules/opcode.vh,IF_ID;id_ex_reg,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/conv_accelerator.v,1775895327,verilog,,D:/New/CS224/CS224-Project/modules/vga_controller.v,,conv_accelerator,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/execute.v,1776119540,verilog,,D:/New/CS224/CS224-Project/modules/wb.v,D:/New/CS224/CS224-Project/modules/opcode.vh,ex_mem_wb_reg;execute,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/line_buffer.v,1775938009,verilog,,D:/New/CS224/CS224-Project/modules/stream_accel_5x5.v,,line_buffer,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/line_buffer_rgb.v,1776522427,verilog,,,,line_buffer_rgb,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/memory.v,1776522427,verilog,,D:/New/CS224/CS224-Project/modules/conv_accelerator.v,,data_mem;instr_mem,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/opcode.vh,1774726483,verilog,,,,,,,,,,,,
+D:/New/CS224/CS224-Project/modules/pipeline.v,1776522427,verilog,,D:/New/CS224/CS224-Project/modules/uart_rx.v,,pipe,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/soc_interconnect.v,1776527858,verilog,,D:/New/CS224/CS224-Project/modules/vga_controller.v,,soc_interconnect,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/stream_accel.v,1775937998,verilog,,D:/New/CS224/CS224-Project/modules/line_buffer.v,,stream_accel,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/stream_accel_5x5.v,1776522427,verilog,,D:/New/CS224/CS224-Project/modules/stream_accel_9x9.v,,stream_accel_5x5,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/stream_accel_5x5_core.v,1776522427,verilog,,D:/New/CS224/CS224-Project/modules/stream_accel_5x5_rgb.v,,stream_accel_5x5_core,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/stream_accel_5x5_rgb.v,1776979800,verilog,,D:/New/CS224/CS224-Project/modules/line_buffer_rgb.v,,stream_accel_5x5_rgb,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/stream_accel_9x9.v,1776522427,verilog,,D:/New/CS224/CS224-Project/modules/stream_accel_5x5_core.v,,stream_accel_9x9,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/tb_pipeline.v,1776533627,verilog,,D:/New/CS224/CS224-Project/modules/tb_pipeline_bootloader.v,,tb_pipeline,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/tb_pipeline_bootloader.v,1776979800,verilog,,D:/New/CS224/CS224-Project/modules/uart_tx.v,,tb_pipeline_bootloader,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/uart_rx.v,1776522427,verilog,,D:/New/CS224/CS224-Project/modules/tb_pipeline.v,,uart_rx,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/uart_tx.v,1775853049,verilog,,D:/New/CS224/CS224-Project/modules/soc_interconnect.v,,uart_tx,,,../modules,,,,,
+D:/New/CS224/CS224-Project/modules/vga_controller.v;D:/New/CS224/CS224-Project/modules/vga_controller.v,1775858715;1775858715,verilog;verilog,,D:/New/CS224/CS224-Project/modules/pipeline.v;D:/New/CS224/CS224-Project/modules/stream_accel.v;D:/New/CS224/CS224-Project/modules/pipeline.v;D:/New/CS224/CS224-Project/modules/stream_accel.v,,vga_controller,,,../modules;../modules,,,,,
+D:/New/CS224/CS224-Project/modules/wb.v,1776119540,verilog,,D:/New/CS224/CS224-Project/modules/memory.v,D:/New/CS224/CS224-Project/modules/opcode.vh,wb,,,../modules,,,,,

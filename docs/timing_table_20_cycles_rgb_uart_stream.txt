@@ -1,0 +1,58 @@
+20-CYCLE TIMING TABLE (UPDATED FOR PIPELINED RGB STREAM)
+=========================================================
+Clock domain in simulation: tb_pipeline_bootloader clk = 100 MHz (10 ns/cycle)
+Design context: top_fpga + soc_interconnect + stream_accel_5x5_rgb + uart_tx/uart_rx
+
+Evidence used for this update:
+- Integrated run PASS: sim/stdout_2788.backup
+- Measured accelerator latency samples: sim/stdout
+
+Measured constants (from latest run)
+------------------------------------
+- push -> valid_mac: 3 cycles (min=max=3)
+- push -> final_pixel_reg visible for MMIO read: 4 cycles (min=max=4)
+- WARMUP_PIXELS = (4 * IMG_WIDTH) + 2 = 514 (IMG_WIDTH=128)
+- UART in tb_pipeline_bootloader uses CLKS_PER_BIT=2
+  -> minimum UART byte time = (1 start + 8 data + 1 stop) * 2 + 1 cleanup = 21 cycles/byte
+  -> minimum UART time per RGB pixel (3 bytes) = 63 cycles/pixel
+
+Tracked pixel token (journey pixel)
+-----------------------------------
+- PIX = 0x002E60B2 (R=0x2E, G=0x60, B=0xB2)
+- New incoming pixel pushed this slice: PIN = 0x003366CC
+- Mode shown: first filter run (sw[3:0] = 0010)
+
+Cycle Index:
+Signal                              | C00 | C01 | C02 | C03 | C04 | C05 | C06 | C07 | C08 | C09 | C10 | C11 | C12 | C13 | C14 | C15 | C16 | C17 | C18 | C19 |
+------------------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+core_reset                          | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   |
+sw[15] (bootloader bypass switch)   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+sw[3:0] (filter select)             |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |0010 |
+token stage                         |PUSH |S0   |S1   |S2   |READ |VRAM |UARTR|BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |BUSY |
+latency from push (cycles)          | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12  | 13  | 14  | 15  | 16  | 17  | 18  | 19  |
+
+dmem_write_ready (cpu_we)           | 1   | 0   | 0   | 0   | 0   | 1   | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+dmem_read_ready (cpu_re)            | 0   | 0   | 0   | 0   | 1   | 0   | 0   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   |
+dmem_write_address                  |0x00012024|----|----|----|----|0x00030000|0x00015000|----|----|----|----|----|----|----|----|----|----|----|----|----|
+dmem_read_address                   |----|----|----|----|0x00012028|----|----|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|0x00015004|
+dmem_write_data                     |0x003366CC|----|----|----|----|0x002E60B2|0x0000002E|----|----|----|----|----|----|----|----|----|----|----|----|----|
+
+accel_we                            | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+my_conv.pixel_push                  | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+my_conv.valid_mul                   | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+my_conv.valid_row                   | 0   | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+my_conv.valid_mac                   | 0   | 0   | 0   | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+my_conv.final_pixel_reg (new token) | old | old | old | old | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX | PIX |
+cpu_rdata_mux                        |0x00000000|0x00000000|0x00000000|0x00000000|0x002E60B2|0x00000000|0x00000000|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|0x00000001|
+
+vram_we                             | 0   | 0   | 0   | 0   | 0   | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+vram_write_addr                     | ----| ----| ----| ----| ----|0x0000| ----| ----| ----| ----| ----| ----| ----| ----| ----| ----| ----| ----| ----| ----|
+uart_we (tx_start)                  | 0   | 0   | 0   | 0   | 0   | 0   | 1   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+my_uart.tx_active                   | 0   | 0   | 0   | 0   | 0   | 0   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 1   |
+
+Interpretation
+--------------
+1) The accelerator path is now explicitly pipelined and measured at 3 cycles to valid_mac and 4 cycles to a CPU-visible filtered word.
+2) Software already waits 3 NOPs between push and read, which aligns with this pipeline.
+3) In steady-state output mode, UART dominates throughput (>=63 cycles/pixel at CLKS_PER_BIT=2 in this testbench), so accelerator latency is no longer the bottleneck.
+4) The integrated simulation still passes both runs and emits full-frame outputs (12288 pixels each run).

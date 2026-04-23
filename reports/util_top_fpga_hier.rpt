@@ -1,0 +1,45 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Sun Apr 19 22:49:32 2026
+| Host         : LAPTOP-U473BDC0 running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical -file reports/util_top_fpga_hier.rpt
+| Design       : top_fpga
+| Device       : xc7a100tcsg324-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-------------------+----------------------+------------+------------+---------+------+------+--------+--------+------------+
+|      Instance     |        Module        | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | DSP Blocks |
++-------------------+----------------------+------------+------------+---------+------+------+--------+--------+------------+
+| top_fpga          |                (top) |       6027 |       5643 |       0 |  384 | 2751 |     47 |      0 |         93 |
+|   (top_fpga)      |                (top) |          1 |          1 |       0 |    0 |   22 |      0 |      0 |          0 |
+|   IMEM            |            instr_mem |         63 |         63 |       0 |    0 |    0 |     15 |      0 |          0 |
+|   bus             |     soc_interconnect |         64 |         64 |       0 |    0 |   90 |      0 |      0 |          0 |
+|   my_conv         | stream_accel_5x5_rgb |       1761 |       1377 |       0 |  384 | 1219 |      0 |      0 |         81 |
+|     (my_conv)     | stream_accel_5x5_rgb |        753 |        753 |       0 |    0 |  330 |      0 |      0 |         81 |
+|     LB1           |      line_buffer_rgb |        252 |        156 |       0 |   96 |  313 |      0 |      0 |          0 |
+|     LB2           |    line_buffer_rgb_0 |        252 |        156 |       0 |   96 |  192 |      0 |      0 |          0 |
+|     LB3           |    line_buffer_rgb_1 |        252 |        156 |       0 |   96 |  192 |      0 |      0 |          0 |
+|     LB4           |    line_buffer_rgb_2 |        252 |        156 |       0 |   96 |  192 |      0 |      0 |          0 |
+|   pipe_u          |                 pipe |       4019 |       4019 |       0 |    0 | 1288 |      0 |      0 |         12 |
+|     (pipe_u)      |                 pipe |          2 |          2 |       0 |    0 | 1025 |      0 |      0 |          0 |
+|     IF_ID_stage   |                IF_ID |       1564 |       1564 |       0 |    0 |   95 |      0 |      0 |          0 |
+|       u_id_ex     |            id_ex_reg |       1564 |       1564 |       0 |    0 |   95 |      0 |      0 |          0 |
+|     execute       |              execute |       2401 |       2401 |       0 |    0 |   46 |      0 |      0 |         12 |
+|       (execute)   |              execute |       2108 |       2108 |       0 |    0 |    0 |      0 |      0 |         12 |
+|       u_ex_mem_wb |        ex_mem_wb_reg |        293 |        293 |       0 |    0 |   46 |      0 |      0 |          0 |
+|     wb_stage      |                   wb |         52 |         52 |       0 |    0 |  122 |      0 |      0 |          0 |
++-------------------+----------------------+------------+------------+---------+------+------+--------+--------+------------+
+
+

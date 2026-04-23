@@ -1,0 +1,63 @@
+#-----------------------------------------------------------
+# xsim v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Mon Apr 20 00:31:15 2026
+# Process ID         : 30472
+# Current directory  : D:/New/CS224/CS224-Project/sim
+# Command line       : xsim.exe -log stdout_vga -mode tcl -source {xsim.dir/vga_sim/xsim_script.tcl}
+# Log file           : D:/New/CS224/CS224-Project/sim/stdout_vga
+# Journal file       : D:/New/CS224/CS224-Project/sim\xsim.jou
+# Running On         : LAPTOP-U473BDC0
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26200
+# Processor Detail   : Intel(R) Core(TM) i7-14650HX
+# CPU Frequency      : 2419 MHz
+# CPU Physical cores : 16
+# CPU Logical cores  : 24
+# Host memory        : 16869 MB
+# Swap memory        : 21474 MB
+# Total Virtual      : 38344 MB
+# Available Virtual  : 15299 MB
+#-----------------------------------------------------------
+source xsim.dir/vga_sim/xsim_script.tcl
+# xsim {vga_sim} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+INFO: Loaded 49152 bootloader input bytes.
+INFO: Entering UART-load emulation phase.
+INFO: UART load progress: 0 / 49152 bytes
+INFO: UART load progress: 4096 / 49152 bytes
+INFO: UART load progress: 8192 / 49152 bytes
+INFO: UART load progress: 12288 / 49152 bytes
+INFO: UART load progress: 16384 / 49152 bytes
+INFO: UART load progress: 20480 / 49152 bytes
+INFO: UART load progress: 24576 / 49152 bytes
+INFO: UART load progress: 28672 / 49152 bytes
+INFO: UART load progress: 32768 / 49152 bytes
+INFO: UART load progress: 36864 / 49152 bytes
+INFO: UART load progress: 40960 / 49152 bytes
+INFO: UART load progress: 45056 / 49152 bytes
+INFO: SW[15] is now low; processing should start.
+INFO: First VRAM write observed.
+INFO: VRAM write progress: 2048 / 12288
+INFO: VRAM write progress: 4096 / 12288
+INFO: VRAM write progress: 6144 / 12288
+INFO: VRAM write progress: 8192 / 12288
+INFO: VRAM write progress: 10240 / 12288
+INFO: VRAM received full 12288-pixel frame.
+INFO: Starting VGA frame capture at top-left visible pixel.
+INFO: VGA capture progress: 2048 / 12288 pixels
+INFO: VGA capture progress: 4096 / 12288 pixels
+INFO: VGA capture progress: 6144 / 12288 pixels
+INFO: VGA capture progress: 8192 / 12288 pixels
+INFO: VGA capture progress: 10240 / 12288 pixels
+INFO: VGA capture progress: 12288 / 12288 pixels
+PASS: VGA frame capture complete (12288 pixels).
+PASS: Wrote VGA frame pixels to vga_frame_pixels.txt
+$finish called at time : 58800115 ns : File "D:/New/CS224/CS224-Project/modules/tb_pipeline_vga_bootloader.v" Line 337
+run: Time (s): cpu = 00:00:00 ; elapsed = 00:01:25 . Memory (MB): peak = 226.090 ; gain = 0.000
+exit
+INFO: xsimkernel Simulation Memory Usage: 13628 KB (Peak: 13628 KB), Simulation CPU Usage: 81593 ms
+INFO: [Common 17-206] Exiting xsim at Mon Apr 20 00:32:44 2026...
