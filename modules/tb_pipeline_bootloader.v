@@ -2,7 +2,7 @@
 
 module tb_pipeline_bootloader;
 
-    localparam [3:0] FILTER_FIRST  = 4'b0010; // Edge detect / first pass
+    localparam [3:0] FILTER_FIRST  = 4'b0000; // Edge detect / first pass
     localparam [3:0] FILTER_SECOND = 4'b0100; // Sharpen / second pass
     localparam integer INPUT_BYTES = 49152;
     localparam integer OUTPUT_PIXELS = 12288;

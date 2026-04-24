@@ -6,3 +6,11 @@ requirements.txt
 *.pyc
 scripts/
 .Xil/
+scripts/
+reports/
+docs/
+*.bit
+*.log
+*.jou
+top_fpga.bit
+top_fpga copy.bit

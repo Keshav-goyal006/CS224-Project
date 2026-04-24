@@ -20,6 +20,7 @@ SRC_NEGATIVE     = code_negative.c
 SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
 SRC_VISION       = code_rgb_vision.c
+SRC_VISION_5X5   = code_vision_5x5_bootloader.c
 # SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
 
 PATCH_BIT ?= 0
@@ -28,7 +29,7 @@ BIT_IN ?= D:/New/Image_processing/Image_processing.runs/impl_1/top_fpga.bit
 BIT_OUT ?= D:/New/Image_processing/Image_processing.runs/impl_1/fast_update.bit
 
 TARGET           = code.elf
-.PHONY: all clean vision bootloader
+.PHONY: all clean vision bootloader bootloader_5x5
 
 #/// generating .text file of code cross-compiled from highlevel-c code to risc-v code
 # ////////////// Copying and converting the text file into binary files
@@ -95,7 +96,35 @@ bootloader: $(SRC_VISION)
 
 vision: bootloader
 
+bootloader_5x5: $(SRC_VISION_5X5)
+	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.s bootloader.c $(SRC_VISION_5X5) -o vision_5x5.elf
+
+	# Extract exactly the instructions for IMEM
+	$(OBJCOPY) -O binary -j .text -j .text.init vision_5x5.elf ./imem_dmem/imem.bin
+
+	# Extract ALL initialized data for DMEM
+	$(OBJCOPY) -O binary -j .data -j .sdata -j .rodata vision_5x5.elf ./imem_dmem/dmem.bin
+
+	$(OBJDUMP) -d vision_5x5.elf > ./imem_dmem/code.dis
+	cd imem_dmem && python bin2hex.py
+
+# <--- NEW: 9x9 Stream Accelerator Timing Test --->
+timing_9x9: generate_9x9_image
+	$(CC_FOR_VISION) $(CFLAGS_FOR_VISION) -T link.ld crt0.s bootloader.c code_rgb_vision_9x9.c -o timing_9x9.elf
+	
+	# Extract exactly the instructions for IMEM
+	$(OBJCOPY) -O binary -j .text -j .text.init timing_9x9.elf ./imem_dmem/imem.bin
+	
+	# Extract ALL initialized data for DMEM
+	$(OBJCOPY) -O binary -j .data -j .sdata -j .rodata timing_9x9.elf ./imem_dmem/dmem.bin
+	
+	$(OBJDUMP) -d timing_9x9.elf > ./imem_dmem/code.dis
+	cd imem_dmem && python bin2hex.py
+
+generate_9x9_image:
+	python generate_9x9_image.py
+
 # /////clean function
 clean:
 	$(RM) $(TARGET) ./imem_dmem/imem.bin ./imem_dmem/imem.hex ./imem_dmem/dmem.bin ./imem_dmem/dmem.hex ./imem_dmem/code.dis
-	$(MAKE) clean -C memory-map # <--- NEW: Also cleans up the memory-map directory
+	$(RM) timing_9x9.elf image_data_9x9_rgb.h test_9x9_rgb.png

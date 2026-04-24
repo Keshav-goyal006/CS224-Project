@@ -18,3 +18,8 @@
 ../modules/stream_accel_5x5_core.v
 ../modules/stream_accel_5x5_rgb.v
 ../modules/line_buffer_rgb.v
+../modules/tb_stream_accel_5x5_rgb_timing.v
+../modules/tb_stream_accel_5x5_timing.v
+../modules/tb_pipeline_vga_bootloader.v
+../modules/tb_pipeline_bootloader_9x9_latency.v
+../modules/vram.v
