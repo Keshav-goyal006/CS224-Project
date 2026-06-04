@@ -1,0 +1,9 @@
+Stream Accelerator Output Waveform
+==================================================
+Time (ns) | Output Value | Status
+--------------------------------------------------
+     100 | 0x00020005 RGB(  2,  0,  5) | WARMUP
+     200 | 0x0010051e RGB( 16,  5, 30) | WARMUP
+     300 | 0x00341149 RGB( 52, 17, 73) | VALID
+     400 | 0x005c206e RGB( 92, 32,110) | VALID
+     500 | 0x0075297d RGB(117, 41,125) | VALID
