@@ -21,6 +21,7 @@ SRC_FIBONACCI    = code_fibonacci.c
 SRC_XOR          = code_xor.c
 SRC_VISION       = code_rgb_vision.c
 SRC_VISION_5X5   = code_vision_5x5_bootloader.c
+SRC_TB           = code_rgb_vision_9x9.c
 # SRC_VISION       = code_rgba_vision.c      # <--- NEW: Added vision source
 
 PATCH_BIT ?= 0
@@ -123,6 +124,9 @@ timing_9x9: generate_9x9_image
 
 generate_9x9_image:
 	python generate_9x9_image.py
+
+timing_table_tb: SRC_VISION = code_rgb_vision_9x9.c
+timing_table_tb: bootloader
 
 # /////clean function
 clean:

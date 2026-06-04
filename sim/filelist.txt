@@ -22,4 +22,5 @@
 ../modules/tb_stream_accel_5x5_timing.v
 ../modules/tb_pipeline_vga_bootloader.v
 ../modules/tb_pipeline_bootloader_9x9_latency.v
+../modules/tb_pipeline_rgb_timing_table.v
 ../modules/vram.v

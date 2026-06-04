@@ -17,6 +17,7 @@ static volatile uint32_t *const WARM_RESET_CLEAR = (volatile uint32_t *)0x000160
 
 // VGA VRAM base (word-indexed RGB pixels)
 static volatile uint32_t *const VRAM_BASE_WORDS = (volatile uint32_t *)0x00030000u;
+
 // 128x96 RGB image, one 32-bit word per pixel (0x00RRGGBB).
 enum {
     IMG_WIDTH = 128,
@@ -45,6 +46,7 @@ static inline void uart_send_rgb(uint32_t pixel)
     uint8_t r = (uint8_t)((pixel >> 16) & 0xFFu);
     uint8_t g = (uint8_t)((pixel >> 8) & 0xFFu);
     uint8_t b = (uint8_t)(pixel & 0xFFu);
+
     uart_send_byte(r);
     uart_send_byte(g);
     uart_send_byte(b);
@@ -53,19 +55,32 @@ static inline void uart_send_rgb(uint32_t pixel)
 int main(void)
 {
     uint32_t out_idx = 0;
+
     acknowledge_warm_reset();
+
     for (uint32_t i = 0; i < (TOTAL_PIXELS + WARMUP_PIXELS); ++i) {
         uint32_t pixel = (i < TOTAL_PIXELS) ? IMAGE_BASE_WORDS[i] : 0u;
+
         *ACCEL_PUSH = pixel;
-        asm volatile("nop");
-        asm volatile("nop");
-        asm volatile("nop");
+        //(used in sequential processing)
+        // asm volatile("nop");
+        // asm volatile("nop");
+        // asm volatile("nop");
+        
         if (i >= WARMUP_PIXELS) {
+            if(i == WARMUP_PIXELS) {
+                // After warmup pixels, insert a few NOPs to ensure the accelerator has time to process the initial data
+                asm volatile("nop");
+                asm volatile("nop");
+                asm volatile("nop");
+            }
             uint32_t filtered = *ACCEL_READ;
+
             if (out_idx < TOTAL_PIXELS) {
                 VRAM_BASE_WORDS[out_idx] = filtered;
                 out_idx++;
             }
+
             uart_send_rgb(filtered);
         }
     }
@@ -73,5 +88,6 @@ int main(void)
     while (1) {
         asm volatile("nop");
     }
+
     return 0;
 }

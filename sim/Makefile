@@ -10,7 +10,7 @@ XVLOG = xvlog
 XELAB = xelab
 XSIM  = xsim
 
-.PHONY: help clean sort addition negative fibonacci xor vision bootloader timing_9x9 timing_9x9_latency timing_5x5_direct
+.PHONY: help clean sort addition negative fibonacci xor vision bootloader timing_9x9 timing_9x9_latency timing_5x5_direct timing_table_tb
 
 help:
 	@echo "Usage: make <program_name> (e.g. make addition or make vision)"
@@ -83,6 +83,21 @@ timing_5x5_direct:
 	$(XELAB) -top $(TOP_MOD) -snapshot $(SNAPSHOT) -debug typical
 	$(XSIM) $(SNAPSHOT) -runall -log stdout
 
+timing_table_tb: TOP_MOD = tb_pipeline_rgb_timing_table
+timing_table_tb:
+	# 1. Generate bootloader bytes + program hex
+	$(MAKE) clean -C $(MEM_GEN)
+	$(MAKE) $@ -C $(MEM_GEN)
+	cp $(MEM_GEN)/imem_dmem/*.hex .
+	python gen_rgb_bootloader_input.py --input ../mem_generator/image_data_rgb.h --output original_image_rgb_bytes.txt
+
+	# 2. Vivado Simulation Flow
+	$(XVLOG) $(BFLAGS)
+	$(XELAB) -top $(TOP_MOD) -snapshot $(SNAPSHOT) -debug typical
+
+	# 3. Run simulation (writes ../docs/timing_table_20_cycles_rgb_uart_stream_tb.txt)
+	$(XSIM) $(SNAPSHOT) -runall -log stdout_timing_table_tb
+
 #   $(XSIM) $(SNAPSHOT) -R
 
 # /////clean function
@@ -94,4 +109,4 @@ clean:
 	@rm -f original_image_rgb_bytes.txt image_9x9_rgb_bytes.txt
 	# 	$(MAKE) clean -C $(MEM_GEN) # <--- NEW: Also cleans up the mem_generator directory
 	@rm -f riscv_sim.wdb # <--- NEW: Cleans up the waveform database file
-	@rm -f stdout stream_accel_timing_log.txt stream_accel_5x5_timing_log.txt latency_9x9_ifid_to_uart.txt
+	@rm -f stdout stream_accel_timing_log.txt stream_accel_5x5_timing_log.txt latency_9x9_ifid_to_uart.txt stdout_timing_table_tb

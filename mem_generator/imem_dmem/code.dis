@@ -173,7 +173,7 @@ Disassembly of section .text:
  25c:	fe042623          	sw	zero,-20(s0)
  260:	ee5ff0ef          	jal	144 <acknowledge_warm_reset>
  264:	fe042423          	sw	zero,-24(s0)
- 268:	0ac0006f          	j	314 <main+0xc8>
+ 268:	0b80006f          	j	320 <main+0xd4>
  26c:	fe842703          	lw	a4,-24(s0)
  270:	000037b7          	lui	a5,0x3
  274:	02f77063          	bgeu	a4,a5,294 <main+0x48>
@@ -189,36 +189,39 @@ Disassembly of section .text:
  29c:	02478793          	addi	a5,a5,36 # 12024 <main+0x11dd8>
  2a0:	fe442703          	lw	a4,-28(s0)
  2a4:	00e7a023          	sw	a4,0(a5)
- 2a8:	00000013          	nop
- 2ac:	00000013          	nop
- 2b0:	00000013          	nop
+ 2a8:	fe842703          	lw	a4,-24(s0)
+ 2ac:	10200793          	li	a5,258
+ 2b0:	06e7f263          	bgeu	a5,a4,314 <main+0xc8>
  2b4:	fe842703          	lw	a4,-24(s0)
- 2b8:	10200793          	li	a5,258
- 2bc:	04e7f663          	bgeu	a5,a4,308 <main+0xbc>
- 2c0:	000127b7          	lui	a5,0x12
- 2c4:	02878793          	addi	a5,a5,40 # 12028 <main+0x11ddc>
- 2c8:	0007a783          	lw	a5,0(a5)
- 2cc:	fef42023          	sw	a5,-32(s0)
- 2d0:	fec42703          	lw	a4,-20(s0)
- 2d4:	000037b7          	lui	a5,0x3
- 2d8:	02f77463          	bgeu	a4,a5,300 <main+0xb4>
- 2dc:	00030737          	lui	a4,0x30
- 2e0:	fec42783          	lw	a5,-20(s0)
- 2e4:	00279793          	slli	a5,a5,0x2
- 2e8:	00f707b3          	add	a5,a4,a5
- 2ec:	fe042703          	lw	a4,-32(s0)
- 2f0:	00e7a023          	sw	a4,0(a5) # 3000 <main+0x2db4>
- 2f4:	fec42783          	lw	a5,-20(s0)
- 2f8:	00178793          	addi	a5,a5,1
- 2fc:	fef42623          	sw	a5,-20(s0)
- 300:	fe042503          	lw	a0,-32(s0)
- 304:	eddff0ef          	jal	1e0 <uart_send_rgb>
- 308:	fe842783          	lw	a5,-24(s0)
- 30c:	00178793          	addi	a5,a5,1
- 310:	fef42423          	sw	a5,-24(s0)
- 314:	fe842703          	lw	a4,-24(s0)
- 318:	000037b7          	lui	a5,0x3
- 31c:	10278793          	addi	a5,a5,258 # 3102 <main+0x2eb6>
- 320:	f4e7f6e3          	bgeu	a5,a4,26c <main+0x20>
- 324:	00000013          	nop
- 328:	ffdff06f          	j	324 <main+0xd8>
+ 2b8:	10300793          	li	a5,259
+ 2bc:	00f71863          	bne	a4,a5,2cc <main+0x80>
+ 2c0:	00000013          	nop
+ 2c4:	00000013          	nop
+ 2c8:	00000013          	nop
+ 2cc:	000127b7          	lui	a5,0x12
+ 2d0:	02878793          	addi	a5,a5,40 # 12028 <main+0x11ddc>
+ 2d4:	0007a783          	lw	a5,0(a5)
+ 2d8:	fef42023          	sw	a5,-32(s0)
+ 2dc:	fec42703          	lw	a4,-20(s0)
+ 2e0:	000037b7          	lui	a5,0x3
+ 2e4:	02f77463          	bgeu	a4,a5,30c <main+0xc0>
+ 2e8:	00030737          	lui	a4,0x30
+ 2ec:	fec42783          	lw	a5,-20(s0)
+ 2f0:	00279793          	slli	a5,a5,0x2
+ 2f4:	00f707b3          	add	a5,a4,a5
+ 2f8:	fe042703          	lw	a4,-32(s0)
+ 2fc:	00e7a023          	sw	a4,0(a5) # 3000 <main+0x2db4>
+ 300:	fec42783          	lw	a5,-20(s0)
+ 304:	00178793          	addi	a5,a5,1
+ 308:	fef42623          	sw	a5,-20(s0)
+ 30c:	fe042503          	lw	a0,-32(s0)
+ 310:	ed1ff0ef          	jal	1e0 <uart_send_rgb>
+ 314:	fe842783          	lw	a5,-24(s0)
+ 318:	00178793          	addi	a5,a5,1
+ 31c:	fef42423          	sw	a5,-24(s0)
+ 320:	fe842703          	lw	a4,-24(s0)
+ 324:	000037b7          	lui	a5,0x3
+ 328:	10278793          	addi	a5,a5,258 # 3102 <main+0x2eb6>
+ 32c:	f4e7f0e3          	bgeu	a5,a4,26c <main+0x20>
+ 330:	00000013          	nop
+ 334:	ffdff06f          	j	330 <main+0xe4>
